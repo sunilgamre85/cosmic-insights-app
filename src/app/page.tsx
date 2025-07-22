@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Hand, Gem, Sparkles, Newspaper, Bot } from 'lucide-react';
+import { Hand, Gem, Sparkles, Newspaper, Bot, Star } from 'lucide-react';
 
 const features = [
   {
@@ -24,6 +24,13 @@ const features = [
     link: '/horoscope',
     icon: <Sparkles className="h-8 w-8 text-primary" />,
     cta: 'Check Your Horoscope',
+  },
+  {
+    title: 'Janam Kundli',
+    description: 'Generate your detailed Vedic birth chart for deep insights into your life and destiny.',
+    link: '/janam-kundli',
+    icon: <Star className="h-8 w-8 text-primary" />,
+    cta: 'Get Your Kundli',
   },
   {
     title: 'Astrology Blog',
@@ -58,7 +65,7 @@ export default function Home() {
 
         <section id="features" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {features.map((feature) => (
                 <Card key={feature.title} className="flex flex-col transform hover:scale-105 transition-transform duration-300 shadow-lg hover:shadow-2xl">
                   <CardHeader className="flex flex-row items-center gap-4">
