@@ -354,8 +354,18 @@ export function PalmReadingClient() {
             <p className="text-sm">This may take a moment.</p>
         </div>
       )}
+      
+      {result && result.error && (
+          <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Analysis Error</AlertTitle>
+              <AlertDescription>
+                  {result.error}
+              </AlertDescription>
+          </Alert>
+      )}
 
-      {result && (
+      {result && !result.error && (
         <Card className="shadow-lg" id="palm-report">
             <CardHeader>
               <div className="flex justify-between items-center">

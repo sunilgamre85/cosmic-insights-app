@@ -89,12 +89,13 @@ The user has provided the following images:
 Your analysis must be comprehensive. Please perform the following steps:
 
 PART 0: VALIDATE HANDS
-- Before any analysis, you MUST validate that the correct hand is in the correct slot.
-- If a 'leftHandPhoto' is provided, confirm it is a left hand. If it is a right hand, set the 'error' field to "A right hand image was uploaded in the left hand slot. Please upload the correct image." and stop.
-- If a 'rightHandPhoto' is provided, confirm it is a right hand. If it is a left hand, set the 'error' field to "A left hand image was uploaded in the right hand slot. Please upload the correct image." and stop.
+- Before any analysis, you MUST validate that the correct hand is in the correct slot. This is the most important step.
+- If a 'leftHandPhoto' is provided, confirm it is a left hand. If it is a right hand, you MUST set the 'error' field to "A right hand image was uploaded in the left hand slot. Please upload the correct image." and stop immediately.
+- If a 'rightHandPhoto' is provided, confirm it is a right hand. If it is a left hand, you MUST set the 'error' field to "A left hand image was uploaded in the right hand slot. Please upload the correct image." and stop immediately.
 - If you perform this validation and there is no error, the 'error' field MUST be undefined.
 
 PART 1: INDIVIDUAL HAND ANALYSIS
+- If there was no validation error in PART 0, proceed with the analysis.
 - If ONLY the left hand is provided (and validated), perform a full analysis for it and populate 'leftHandAnalysis'. 'rightHandAnalysis' MUST be null.
 - If ONLY the right hand is provided (and validated), perform a full analysis for it and populate 'rightHandAnalysis'. 'leftHandAnalysis' MUST be null.
 - If BOTH hands are provided (and validated), perform analysis for both and populate both 'leftHandAnalysis' and 'rightHandAnalysis'.
@@ -110,14 +111,14 @@ For each hand, your analysis should include:
     *   For each identified line, you MUST provide the coordinates for its path as an array of {x, y} points, normalized from 0.0 to 1.0. Trace each line with enough points (e.g., 5-10) to capture its curve accurately.
 
 PART 2: FINAL REPORT
-- Create a 'combinedReport' based on the hand(s) provided.
+- If there was no validation error, create a 'combinedReport' based on the hand(s) provided.
 - If both hands are present, compare and contrast the left hand (potential) with the right hand (action).
 - If only one hand is present, base the report on that single hand.
 - Synthesize the information into a holistic report with these sections:
   - personalityTraits, loveAndRelationships, careerAndSuccess, healthAndVitality, warningsAndOpportunities.
 
 PART 3: ERROR HANDLING
-- If an image is unclear, set the 'error' field with a helpful message. Do not attempt to analyze an unclear hand.
+- If an image is too unclear to analyze, set the 'error' field with a helpful message like "The provided image is too unclear for analysis." Do not attempt to analyze an unclear hand.
 - If no images are provided, set the 'error' field to "No palm images were provided for analysis."
 
 Return the full analysis in the requested JSON format, strictly adhering to the output schema.`,
@@ -137,9 +138,7 @@ const analyzePalmsFlow = ai.defineFlow(
     if (!output) {
         throw new Error("The AI model failed to return a valid analysis. The image might be unclear.");
     }
-    if (output.error) {
-        throw new Error(`AI analysis failed: ${output.error}`);
-    }
+    // No need to throw here, let the UI handle the display of the error from the AI
     return output;
   }
 );
