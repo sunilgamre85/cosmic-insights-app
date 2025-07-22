@@ -173,24 +173,40 @@ export const getKundliData = async ({ date, lat, lon }: KundliInput): Promise<{a
 
 
 /**
- * Calculates astrological doshas based on planet positions.
+ * Calculates astrological doshas and yogas based on planet positions.
  */
-export const getDoshas = (planets: PlanetData[]): { name: string; description: string }[] => {
-    const doshas: { name: string; description: string }[] = [];
+export const getVedicYogasAndDoshas = (planets: PlanetData[]): { name: string; description: string }[] => {
+    const results: { name: string; description: string }[] = [];
+    const getPlanet = (name: string) => planets.find(p => p.name === name);
 
     // Mangal Dosha (Mars in 1, 4, 7, 8, 12th house)
-    const mars = planets.find(p => p.name === 'Mars');
+    const mars = getPlanet('Mars');
     if (mars) {
         const mangalDoshaHouses = [1, 4, 7, 8, 12];
         if (mangalDoshaHouses.includes(mars.house)) {
-            doshas.push({
+            results.push({
                 name: "Mangal Dosha",
                 description: `Present because Mars is in the ${mars.house}th house.`
             });
         }
     }
+
+    // Gaj Kesari Yoga (Jupiter in a Kendra [1, 4, 7, 10] from the Moon)
+    const jupiter = getPlanet('Jupiter');
+    const moon = getPlanet('Moon');
+    if (jupiter && moon) {
+        const kendraHouses = [1, 4, 7, 10];
+        // Calculate house difference
+        const houseDiff = Math.abs(jupiter.house - moon.house);
+        const relativeHouse = (jupiter.house - moon.house + 12) % 12 + 1;
+
+        if (kendraHouses.includes(relativeHouse)) {
+             results.push({
+                name: "Gaj Kesari Yoga",
+                description: `Present because Jupiter is in a Kendra house (${relativeHouse}) from the Moon.`
+            });
+        }
+    }
     
-    // Placeholder for other doshas like Kaal Sarp
-    
-    return doshas;
+    return results;
 };
