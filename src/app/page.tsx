@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Hand, Gem, Sparkles, Newspaper, Bot, Star, HeartHandshake, Smartphone, BookOpen, CalendarDays, Smile } from 'lucide-react';
+import { Hand, Gem, Sparkles, Newspaper, Bot, Star, HeartHandshake, Smartphone, BookOpen, CalendarDays, Smile, BrainCircuit, CalendarCheck, UserRound, Rainbow } from 'lucide-react';
 
 const features = [
   {
@@ -10,6 +10,7 @@ const features = [
     link: '/palm-reading',
     icon: <Hand className="h-8 w-8 text-primary" />,
     cta: 'Read Your Palm',
+    enabled: true,
   },
   {
     title: 'Face Reading',
@@ -17,6 +18,7 @@ const features = [
     link: '/face-reading',
     icon: <Smile className="h-8 w-8 text-primary" />,
     cta: 'Read Your Face',
+    enabled: true,
   },
   {
     title: 'Numerology Analysis',
@@ -24,6 +26,7 @@ const features = [
     link: '/numerology',
     icon: <Gem className="h-8 w-8 text-primary" />,
     cta: 'Analyze Your Numbers',
+    enabled: true,
   },
   {
     title: 'Daily Horoscope',
@@ -31,6 +34,7 @@ const features = [
     link: '/horoscope',
     icon: <Sparkles className="h-8 w-8 text-primary" />,
     cta: 'Check Your Horoscope',
+    enabled: true,
   },
     {
     title: 'Daily Panchang',
@@ -38,6 +42,7 @@ const features = [
     link: '/panchang',
     icon: <CalendarDays className="h-8 w-8 text-primary" />,
     cta: 'View Today\'s Panchang',
+    enabled: true,
   },
   {
     title: 'Tarot Reading',
@@ -45,6 +50,7 @@ const features = [
     link: '/tarot-reading',
     icon: <BookOpen className="h-8 w-8 text-primary" />,
     cta: 'Get a Reading',
+    enabled: true,
   },
   {
     title: 'Janam Kundli',
@@ -52,6 +58,7 @@ const features = [
     link: '/janam-kundli',
     icon: <Star className="h-8 w-8 text-primary" />,
     cta: 'Get Your Kundli',
+    enabled: true,
   },
   {
     title: 'Kundli Matching',
@@ -59,6 +66,7 @@ const features = [
     link: '/kundli-matching',
     icon: <HeartHandshake className="h-8 w-8 text-primary" />,
     cta: 'Match Kundlis',
+    enabled: true,
   },
   {
     title: 'Mobile Numerology',
@@ -66,6 +74,7 @@ const features = [
     link: '/mobile-numerology',
     icon: <Smartphone className="h-8 w-8 text-primary" />,
     cta: 'Check Your Number',
+    enabled: true,
   },
   {
     title: 'Astrology Blog',
@@ -73,6 +82,39 @@ const features = [
     link: '/blog',
     icon: <Newspaper className="h-8 w-8 text-primary" />,
     cta: 'Read The Blog',
+    enabled: true,
+  },
+  {
+    title: 'Naam Rashi Finder',
+    description: 'Discover your moon sign (Rashi) based on your name, using traditional phonetic principles.',
+    link: '#',
+    icon: <UserRound className="h-8 w-8 text-primary" />,
+    cta: 'Coming Soon',
+    enabled: false,
+  },
+  {
+    title: 'AI Muhurat Finder',
+    description: 'Find auspicious timings for important events like weddings, new ventures, or housewarmings.',
+    link: '#',
+    icon: <CalendarCheck className="h-8 w-8 text-primary" />,
+    cta: 'Coming Soon',
+    enabled: false,
+  },
+  {
+    title: 'Dream Interpretation',
+    description: 'Describe your dream and our AI will provide insights based on Vedic and psychological symbolism.',
+    link: '#',
+    icon: <BrainCircuit className="h-8 w-8 text-primary" />,
+    cta: 'Coming Soon',
+    enabled: false,
+  },
+   {
+    title: 'Chakra & Aura Reading',
+    description: 'Upload your photo and let our AI provide an analysis of your energy centers (Chakras).',
+    link: '#',
+    icon: <Rainbow className="h-8 w-8 text-primary" />,
+    cta: 'Coming Soon',
+    enabled: false,
   },
 ];
 
@@ -100,7 +142,7 @@ export default function Home() {
 
         <section id="features" className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {features.map((feature) => (
                 <Card key={feature.title} className="flex flex-col transform hover:scale-105 transition-transform duration-300 shadow-lg hover:shadow-2xl">
                   <CardHeader className="flex flex-row items-center gap-4">
@@ -110,7 +152,7 @@ export default function Home() {
                   <CardContent className="flex-grow flex flex-col justify-between">
                     <p className="text-muted-foreground mb-4">{feature.description}</p>
                     <Link href={feature.link} className="mt-auto">
-                      <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                      <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground" disabled={!feature.enabled}>
                         {feature.cta}
                       </Button>
                     </Link>
