@@ -1,24 +1,29 @@
 'use server';
 
 /**
- * @fileOverview Analyzes a user-uploaded palm image to provide insights into their personality and future.
+ * @fileOverview Analyzes user-uploaded images of both left and right palms to provide a comprehensive reading.
  *
- * - analyzePalm - A function that handles the palm image analysis process.
- * - AnalyzePalmInput - The input type for the analyzePalm function.
- * - AnalyzePalmOutput - The return type for the analyzePalm function.
+ * - analyzePalms - A function that handles the dual palm image analysis process.
+ * - AnalyzePalmsInput - The input type for the analyzePalms function.
+ * - AnalyzePalmsOutput - The return type for the analyzePalms function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const AnalyzePalmInputSchema = z.object({
-  photoDataUri: z
+const AnalyzePalmsInputSchema = z.object({
+  leftHandPhoto: z
     .string()
     .describe(
-      "A photo of the user's palm, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo of the user's left palm, as a data URI that must include a MIME type and use Base64 encoding."
+    ),
+  rightHandPhoto: z
+    .string()
+    .describe(
+      "A photo of the user's right palm, as a data URI that must include a MIME type and use Base64 encoding."
     ),
 });
-export type AnalyzePalmInput = z.infer<typeof AnalyzePalmInputSchema>;
+export type AnalyzePalmsInput = z.infer<typeof AnalyzePalmsInputSchema>;
 
 const PointSchema = z.object({
     x: z.number().describe('The x-coordinate of a point on the line, normalized between 0 and 1.'),
@@ -35,33 +40,40 @@ const GeneralAnalysisSchema = z.object({
     mounts: z.string().optional().describe('Analysis of the prominent mounts like the Mount of Venus, Jupiter, and Saturn and their implications.'),
 });
 
-const AnalyzePalmOutputSchema = z.object({
+const SinglePalmAnalysisSchema = z.object({
   lifeLine: LineSchema.describe('Analysis and path of the life line.'),
   heartLine: LineSchema.describe('Analysis and path of the heart line.'),
   headline: LineSchema.describe('Analysis and path of the head line.'),
   fateLine: LineSchema.optional().describe('Analysis and path of the fate line (if visible).'),
   sunLine: LineSchema.optional().describe('Analysis and path of the sun line, also known as the Apollo line (if visible).'),
   generalAnalysis: GeneralAnalysisSchema.optional().describe('General analysis of other important palm features.'),
-  error: z.string().optional().describe('An error message if the palm could not be analyzed.'),
 });
-export type AnalyzePalmOutput = z.infer<typeof AnalyzePalmOutputSchema>;
 
-export async function analyzePalm(input: AnalyzePalmInput): Promise<AnalyzePalmOutput> {
-  return analyzePalmFlow(input);
+const AnalyzePalmsOutputSchema = z.object({
+  leftHandAnalysis: SinglePalmAnalysisSchema.describe("The detailed analysis for the left hand, representing potential and innate traits."),
+  rightHandAnalysis: SinglePalmAnalysisSchema.describe("The detailed analysis for the right hand, representing actions and current life path."),
+  combinedInsight: z.string().describe("A synthesized analysis comparing and contrasting the two hands to provide a complete, holistic reading."),
+  error: z.string().optional().describe('An error message if the palms could not be analyzed.'),
+});
+export type AnalyzePalmsOutput = z.infer<typeof AnalyzePalmsOutputSchema>;
+
+export async function analyzePalms(input: AnalyzePalmsInput): Promise<AnalyzePalmsOutput> {
+  return analyzePalmsFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'analyzePalmPrompt',
-  input: {schema: AnalyzePalmInputSchema},
-  output: {schema: AnalyzePalmOutputSchema},
+  name: 'analyzePalmsPrompt',
+  input: {schema: AnalyzePalmsInputSchema},
+  output: {schema: AnalyzePalmsOutputSchema},
   config: {
     temperature: 0.2,
   },
-  prompt: `You are an expert palm reader. Your task is to analyze the user's palm from the provided image, regardless of whether it is a left or right hand.
+  prompt: `You are an expert palm reader. Your task is to analyze the user's left and right palms from the provided images and deliver a comprehensive, synthesized reading.
 
-Palm Image: {{media url=photoDataUri}}
+Left Palm (Potential & Karma): {{media url=leftHandPhoto}}
+Right Palm (Action & Current Life): {{media url=rightHandPhoto}}
 
-Your analysis must be comprehensive. Please perform the following steps:
+Your analysis must be comprehensive. Please perform the following steps for EACH HAND:
 
 1.  **Identify and Analyze Major Lines:**
     *   Identify and analyze the major palm lines visible in the image: Life Line, Heart Line, Head Line.
@@ -78,17 +90,22 @@ Your analysis must be comprehensive. Please perform the following steps:
     *   Provide an analysis of the overall hand shape (e.g., classify as Earth, Air, Fire, or Water hand and explain the meaning).
     *   Analyze the prominent mounts, especially the Mounts of Venus, Jupiter, and Saturn, and describe their implications for the person's character and life.
 
-4.  **Error Handling:**
-    *   If you cannot clearly identify the palm or its lines from the image, set the 'error' field with a helpful message like "The image is unclear or does not appear to be a palm. Please provide a clear, well-lit photo of a palm." In this case, leave the other fields empty.
+After analyzing both hands individually, create a **Combined Insight**:
+*   Compare and contrast the left hand (potential) with the right hand (action).
+*   Highlight key differences and what they mean for the person's life journey. For example, "Your left hand shows a strong creative potential (Sun Line), while your right hand's practical Fate Line indicates you've channeled this into a stable career. This suggests you have successfully manifested your innate talents."
+*   Provide a holistic summary and advice based on the complete picture from both palms.
 
-Return the full analysis, all coordinate paths, and general feature analysis in the requested JSON format.`,
+4.  **Error Handling:**
+    *   If you cannot clearly identify the palm or its lines from an image, set the 'error' field with a helpful message like "The image for the [left/right] hand is unclear. Please provide a clear, well-lit photo of a palm." In this case, do not attempt to provide an analysis for the unclear hand.
+
+Return the full analysis for both hands, all coordinate paths, and the combined insight in the requested JSON format.`,
 });
 
-const analyzePalmFlow = ai.defineFlow(
+const analyzePalmsFlow = ai.defineFlow(
   {
-    name: 'analyzePalmFlow',
-    inputSchema: AnalyzePalmInputSchema,
-    outputSchema: AnalyzePalmOutputSchema,
+    name: 'analyzePalmsFlow',
+    inputSchema: AnalyzePalmsInputSchema,
+    outputSchema: AnalyzePalmsOutputSchema,
   },
   async input => {
     const {output} = await prompt(input);

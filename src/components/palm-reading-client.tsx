@@ -8,11 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes } from "lucide-react";
-import { analyzePalm, type AnalyzePalmOutput } from "@/ai/flows/ai-palm-reading";
+import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes, BookCopy } from "lucide-react";
+import { analyzePalms, type AnalyzePalmsOutput } from "@/ai/flows/ai-palm-reading";
 import { Separator } from "./ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import React from 'react';
+import { cn } from "@/lib/utils";
+
+type SinglePalmAnalysis = AnalyzePalmsOutput['leftHandAnalysis'];
 
 const lineColors = {
     lifeLine: 'stroke-red-500',
@@ -40,14 +43,16 @@ const lineTextColors = {
 
 
 export function PalmReadingClient() {
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [leftHandFile, setLeftHandFile] = useState<File | null>(null);
+  const [rightHandFile, setRightHandFile] = useState<File | null>(null);
+  const [leftPreviewUrl, setLeftPreviewUrl] = useState<string | null>(null);
+  const [rightPreviewUrl, setRightPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<AnalyzePalmOutput | null>(null);
+  const [result, setResult] = useState<AnalyzePalmsOutput | null>(null);
   const [highlightedLine, setHighlightedLine] = useState<string | null>(null);
   const { toast } = useToast();
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  
+  const handleFileChange = (hand: 'left' | 'right') => (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       if (selectedFile.size > 4 * 1024 * 1024) { // 4MB limit
@@ -58,30 +63,42 @@ export function PalmReadingClient() {
         });
         return;
       }
-      setFile(selectedFile);
+      
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
+          const url = reader.result as string;
+          if(hand === 'left') {
+              setLeftHandFile(selectedFile);
+              setLeftPreviewUrl(url);
+          } else {
+              setRightHandFile(selectedFile);
+              setRightPreviewUrl(url);
+          }
       };
       reader.readAsDataURL(selectedFile);
       setResult(null);
     }
   };
 
-  const handleRemoveImage = () => {
-    setFile(null);
-    setPreviewUrl(null);
+  const handleRemoveImage = (hand: 'left' | 'right') => () => {
+    if (hand === 'left') {
+        setLeftHandFile(null);
+        setLeftPreviewUrl(null);
+    } else {
+        setRightHandFile(null);
+        setRightPreviewUrl(null);
+    }
     setResult(null);
     setHighlightedLine(null);
-    const fileInput = document.getElementById('palm-image-upload') as HTMLInputElement;
+    const fileInput = document.getElementById(`palm-image-upload-${hand}`) as HTMLInputElement;
     if(fileInput) fileInput.value = "";
   }
 
   const handleAnalyze = async () => {
-    if (!file) {
+    if (!leftHandFile || !rightHandFile || !leftPreviewUrl || !rightPreviewUrl) {
       toast({
-        title: "No file selected",
-        description: "Please upload an image of your palm.",
+        title: "Missing Image",
+        description: "Please upload images for both left and right hands.",
         variant: "destructive",
       });
       return;
@@ -92,20 +109,11 @@ export function PalmReadingClient() {
     setHighlightedLine(null);
 
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async (event) => {
-        const photoDataUri = event.target?.result as string;
-        if (photoDataUri) {
-          const analysisResult = await analyzePalm({ photoDataUri });
-          setResult(analysisResult);
-        } else {
-            throw new Error("Could not read file.");
-        }
-      };
-      reader.onerror = (error) => {
-        throw new Error("Error reading file: " + error);
-      }
+        const analysisResult = await analyzePalms({ 
+            leftHandPhoto: leftPreviewUrl,
+            rightHandPhoto: rightPreviewUrl
+        });
+        setResult(analysisResult);
     } catch (error) {
       console.error("Analysis failed:", error);
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
@@ -119,74 +127,153 @@ export function PalmReadingClient() {
     }
   };
   
-  const lineDetails = result ? [
-    ...(result.lifeLine ? [{ key: 'lifeLine', title: "Life Line", data: result.lifeLine, icon: <Hand className="h-5 w-5" /> }] : []),
-    ...(result.headline ? [{ key: 'headline', title: "Head Line", data: result.headline, icon: <Brain className="h-5 w-5" /> }] : []),
-    ...(result.heartLine ? [{ key: 'heartLine', title: "Heart Line", data: result.heartLine, icon: <Heart className="h-5 w-5" /> }] : []),
-    ...(result.fateLine ? [{ key: 'fateLine', title: "Fate Line", data: result.fateLine, icon: <Sparkles className="h-5 w-5" /> }] : []),
-    ...(result.sunLine ? [{ key: 'sunLine', title: "Sun Line (Apollo)", data: result.sunLine, icon: <Sun className="h-5 w-5" /> }] : [])
-  ] : [];
-
   const svgPath = (points: {x: number, y: number}[]) => {
       if (!points || points.length === 0) return "";
       return `M ${points.map(p => `${p.x * 100}% ${p.y * 100}%`).join(' L ')}`;
   };
+  
+  const FileUploader = ({hand, previewUrl, onFileChange, onRemove}: {hand: 'left' | 'right', previewUrl: string | null, onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void, onRemove: () => void}) => (
+    <div className="w-full">
+        <h3 className="font-headline text-lg text-center mb-2 capitalize">{hand} Hand</h3>
+        {!previewUrl ? (
+        <Label
+            htmlFor={`palm-image-upload-${hand}`}
+            className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary transition-colors"
+        >
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+            <FileImage className="w-10 h-10 mb-3 text-muted-foreground" />
+            <p className="mb-2 text-sm text-muted-foreground">
+                <span className="font-semibold">Click to upload</span> or drag and drop
+            </p>
+            <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (MAX. 4MB)</p>
+            </div>
+            <Input id={`palm-image-upload-${hand}`} type="file" className="hidden" onChange={onFileChange} accept="image/png, image/jpeg, image/webp" />
+        </Label>
+        ) : (
+        <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
+            <Image src={previewUrl} alt={`${hand} palm preview`} layout="fill" objectFit="contain" />
+            <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 z-10" onClick={onRemove}>
+            <X className="h-4 w-4" />
+            </Button>
+        </div>
+        )}
+  </div>
+  );
+
+  const AnalysisDisplay = ({ analysis, handTitle, previewUrl }: { analysis: SinglePalmAnalysis, handTitle: string, previewUrl: string | null }) => {
+    const lineDetails = analysis ? [
+        ...(analysis.lifeLine ? [{ key: 'lifeLine', title: "Life Line", data: analysis.lifeLine, icon: <Hand className="h-5 w-5" /> }] : []),
+        ...(analysis.headline ? [{ key: 'headline', title: "Head Line", data: analysis.headline, icon: <Brain className="h-5 w-5" /> }] : []),
+        ...(analysis.heartLine ? [{ key: 'heartLine', title: "Heart Line", data: analysis.heartLine, icon: <Heart className="h-5 w-5" /> }] : []),
+        ...(analysis.fateLine ? [{ key: 'fateLine', title: "Fate Line", data: analysis.fateLine, icon: <Sparkles className="h-5 w-5" /> }] : []),
+        ...(analysis.sunLine ? [{ key: 'sunLine', title: "Sun Line (Apollo)", data: analysis.sunLine, icon: <Sun className="h-5 w-5" /> }] : [])
+    ] : [];
+
+    return (
+        <div className="space-y-4 flex-1 min-w-[300px]">
+            <h3 className="font-headline text-2xl text-center">{handTitle}</h3>
+            {previewUrl && (
+                <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
+                    <Image src={previewUrl} alt={`${handTitle} palm analysis`} layout="fill" objectFit="contain" />
+                    <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        {lineDetails.map(line => line.data && line.data.path && (
+                            <path
+                                key={line.key}
+                                d={svgPath(line.data.path)}
+                                className={cn('fill-none transition-all duration-200',
+                                    highlightedLine === line.key
+                                    ? highlightedLineColors[line.key as keyof typeof highlightedLineColors]
+                                    : lineColors[line.key as keyof typeof lineColors]
+                                )}
+                                strokeWidth={highlightedLine === line.key ? 3 : 1.5}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        ))}
+                    </svg>
+                </div>
+            )}
+            {lineDetails.length > 0 ? lineDetails.map((detail) => detail.data && (
+                <div 
+                    key={detail.key}
+                    onMouseEnter={() => setHighlightedLine(detail.key)}
+                    onMouseLeave={() => setHighlightedLine(null)}
+                    className="cursor-pointer p-2 rounded-md hover:bg-secondary"
+                >
+                    <h4 className={`font-headline text-lg flex items-center gap-2 ${lineTextColors[detail.key as keyof typeof lineTextColors]}`}>
+                        {React.cloneElement(detail.icon, { className: `h-5 w-5 ${lineTextColors[detail.key as keyof typeof lineTextColors]}` })} 
+                        {detail.title}
+                    </h4>
+                    <p className="mt-1 text-sm text-foreground/90 pl-7">{detail.data.analysis}</p>
+                </div>
+            )) : (
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Analysis Incomplete</AlertTitle>
+                    <AlertDescription>
+                        The AI was unable to identify the standard palm lines in this image.
+                    </AlertDescription>
+                </Alert>
+            )}
+            
+            {analysis.generalAnalysis && (
+                <div className="p-2 rounded-md hover:bg-secondary">
+                <h4 className="font-headline text-lg flex items-center gap-2 text-primary">
+                    <Shapes className="h-5 w-5" /> General Palm Features
+                </h4>
+                <div className="space-y-2 mt-2 pl-7">
+                    {analysis.generalAnalysis.handShape && (
+                        <div>
+                        <h5 className="font-semibold text-sm">Hand Shape</h5>
+                        <p className="text-sm text-foreground/90">{analysis.generalAnalysis.handShape}</p>
+                        </div>
+                    )}
+                    {analysis.generalAnalysis.mounts && (
+                        <div>
+                        <h5 className="font-semibold text-sm">Mounts Analysis</h5>
+                        <p className="text-sm text-foreground/90">{analysis.generalAnalysis.mounts}</p>
+                        </div>
+                    )}
+                </div>
+                </div>
+            )}
+        </div>
+    );
+  }
 
 
   return (
     <div className="space-y-8">
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><Upload className="h-6 w-6" /> Upload Your Palm</CardTitle>
-          <CardDescription>Upload a clear image of your dominant hand's palm.</CardDescription>
+          <CardTitle className="font-headline flex items-center gap-2"><Upload className="h-6 w-6" /> Upload Your Palms</CardTitle>
+          <CardDescription>Upload clear images of both your left and right hands for a complete reading.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="w-full">
-              {!previewUrl ? (
-                <Label
-                  htmlFor="palm-image-upload"
-                  className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary transition-colors"
-                >
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <FileImage className="w-10 h-10 mb-3 text-muted-foreground" />
-                    <p className="mb-2 text-sm text-muted-foreground">
-                      <span className="font-semibold">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (MAX. 4MB)</p>
-                  </div>
-                  <Input id="palm-image-upload" type="file" className="hidden" onChange={handleFileChange} accept="image/png, image/jpeg, image/webp" />
-                </Label>
-              ) : (
-                <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
-                  <Image src={previewUrl} alt="Palm preview" layout="fill" objectFit="contain" />
-                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 z-10" onClick={handleRemoveImage}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-            {previewUrl && 
-                <Button onClick={handleAnalyze} disabled={!file || isLoading} className="w-full">
+          <div className="grid md:grid-cols-2 gap-8 items-start">
+             <FileUploader hand="left" previewUrl={leftPreviewUrl} onFileChange={handleFileChange('left')} onRemove={handleRemoveImage('left')} />
+             <FileUploader hand="right" previewUrl={rightPreviewUrl} onFileChange={handleFileChange('right')} onRemove={handleRemoveImage('right')} />
+          </div>
+            <div className="mt-8">
+                <Button onClick={handleAnalyze} disabled={!leftHandFile || !rightHandFile || isLoading} className="w-full">
                 {isLoading ? (
                     <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
                     </>
                 ) : (
                     <>
-                    <Wand2 className="mr-2 h-4 w-4" /> Analyze with AI
+                    <Wand2 className="mr-2 h-4 w-4" /> Analyze Palms with AI
                     </>
                 )}
                 </Button>
-            }
-          </div>
+            </div>
         </CardContent>
       </Card>
 
       {isLoading && (
         <div className="flex flex-col items-center justify-center text-muted-foreground pt-8">
             <Loader2 className="h-8 w-8 animate-spin mb-4" />
-            <p>Our AI is reading your palm...</p>
+            <p>Our AI is reading your palms...</p>
             <p className="text-sm">This may take a moment.</p>
         </div>
       )}
@@ -194,79 +281,25 @@ export function PalmReadingClient() {
       {result && (
         <Card className="shadow-lg">
             <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> AI Analysis</CardTitle>
-            <CardDescription>Hover over a line's analysis to see it highlighted on the image.</CardDescription>
+            <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> Your Comprehensive AI Analysis</CardTitle>
+            <CardDescription>Left hand shows potential, right hand shows action. See the full story below.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-                {previewUrl && (
-                    <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
-                        <Image src={previewUrl} alt="Palm analysis" layout="fill" objectFit="contain" />
-                        <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            {lineDetails.map(line => line.data && line.data.path && (
-                                <path
-                                    key={line.key}
-                                    d={svgPath(line.data.path)}
-                                    className={`fill-none transition-all duration-200 ${
-                                        highlightedLine === line.key
-                                        ? highlightedLineColors[line.key as keyof typeof highlightedLineColors]
-                                        : lineColors[line.key as keyof typeof lineColors]
-                                    }`}
-                                    strokeWidth={highlightedLine === line.key ? 3 : 1.5}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                            ))}
-                        </svg>
-                    </div>
-                )}
-                 {lineDetails.length > 0 ? lineDetails.map((detail, index) => detail.data && (
-                    <React.Fragment key={detail.key}>
-                      <div 
-                        onMouseEnter={() => setHighlightedLine(detail.key)}
-                        onMouseLeave={() => setHighlightedLine(null)}
-                        className="cursor-pointer"
-                      >
-                          <h3 className={`font-headline text-xl flex items-center gap-2 ${lineTextColors[detail.key as keyof typeof lineTextColors]}`}>
-                              {React.cloneElement(detail.icon, { className: `h-5 w-5 ${lineTextColors[detail.key as keyof typeof lineTextColors]}` })} 
-                              {detail.title}
-                          </h3>
-                          <p className="mt-2 text-base text-foreground/90 pl-7">
-                              {detail.data.analysis}
-                          </p>
-                      </div>
-                      <Separator className="mt-6" />
-                    </React.Fragment>
-                )) : (
-                    <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Analysis Incomplete</AlertTitle>
-                        <AlertDescription>
-                            The AI was unable to identify the standard palm lines in the provided image. Please try again with a clearer, more direct photo of your palm.
-                        </AlertDescription>
-                    </Alert>
-                )}
-                
-                {result.generalAnalysis && (
-                  <div>
-                    <h3 className="font-headline text-xl flex items-center gap-2 text-primary">
-                        <Shapes className="h-5 w-5" /> General Palm Features
+            <CardContent className="space-y-8">
+                <div className="flex flex-col md:flex-row gap-8">
+                    {result.leftHandAnalysis && <AnalysisDisplay analysis={result.leftHandAnalysis} handTitle="Left Hand (Potential)" previewUrl={leftPreviewUrl} />}
+                    {result.rightHandAnalysis && <AnalysisDisplay analysis={result.rightHandAnalysis} handTitle="Right Hand (Action)" previewUrl={rightPreviewUrl} />}
+                </div>
+
+                <Separator />
+
+                <div>
+                    <h3 className="font-headline text-2xl flex items-center gap-2 text-primary">
+                        <BookCopy className="h-6 w-6" /> Combined Insight
                     </h3>
-                    <div className="space-y-4 mt-2 pl-7">
-                        {result.generalAnalysis.handShape && (
-                           <div>
-                             <h4 className="font-semibold">Hand Shape</h4>
-                             <p className="text-base text-foreground/90">{result.generalAnalysis.handShape}</p>
-                           </div>
-                        )}
-                        {result.generalAnalysis.mounts && (
-                           <div>
-                             <h4 className="font-semibold">Mounts Analysis</h4>
-                             <p className="text-base text-foreground/90">{result.generalAnalysis.mounts}</p>
-                           </div>
-                        )}
-                    </div>
-                  </div>
-                )}
+                    <p className="mt-2 text-base text-foreground/90 whitespace-pre-wrap">
+                        {result.combinedInsight}
+                    </p>
+                </div>
             </CardContent>
         </Card>
       )}
@@ -274,8 +307,8 @@ export function PalmReadingClient() {
       {!isLoading && !result && (
          <div className="flex flex-col items-center justify-center text-center text-muted-foreground pt-8">
             <Hand className="h-12 w-12 mb-4" />
-            <p>Your future awaits.</p>
-            <p className="text-sm">Upload an image to begin.</p>
+            <p>Your future awaits in both your hands.</p>
+            <p className="text-sm">Upload both images to begin.</p>
         </div>
       )}
 
