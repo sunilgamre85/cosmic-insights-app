@@ -18,11 +18,19 @@ const lineColors = {
     fateLine: 'stroke-purple-500',
 };
 
+const highlightedLineColors = {
+    lifeLine: 'stroke-red-400',
+    headline: 'stroke-blue-400',
+    heartLine: 'stroke-pink-400',
+    fateLine: 'stroke-purple-400',
+}
+
 export function PalmReadingClient() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalyzePalmOutput | null>(null);
+  const [highlightedLine, setHighlightedLine] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,6 +58,7 @@ export function PalmReadingClient() {
     setFile(null);
     setPreviewUrl(null);
     setResult(null);
+    setHighlightedLine(null);
     const fileInput = document.getElementById('palm-image-upload') as HTMLInputElement;
     if(fileInput) fileInput.value = "";
   }
@@ -66,6 +75,7 @@ export function PalmReadingClient() {
 
     setIsLoading(true);
     setResult(null);
+    setHighlightedLine(null);
 
     try {
       const reader = new FileReader();
@@ -167,7 +177,7 @@ export function PalmReadingClient() {
         <Card className="shadow-lg w-full max-w-2xl mx-auto">
             <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> AI Analysis</CardTitle>
-            <CardDescription>Your personalized palm reading results appear below.</CardDescription>
+            <CardDescription>Hover over a line's analysis to see it highlighted on the image.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 {previewUrl && (
@@ -178,8 +188,12 @@ export function PalmReadingClient() {
                                 <path
                                     key={line.key}
                                     d={svgPath(line.data.path)}
-                                    className={`${lineColors[line.key as keyof typeof lineColors]} fill-none`}
-                                    strokeWidth="1.5"
+                                    className={`fill-none transition-all duration-200 ${
+                                        highlightedLine === line.key
+                                        ? highlightedLineColors[line.key as keyof typeof highlightedLineColors]
+                                        : lineColors[line.key as keyof typeof lineColors]
+                                    }`}
+                                    strokeWidth={highlightedLine === line.key ? 3 : 1.5}
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                 />
@@ -188,7 +202,12 @@ export function PalmReadingClient() {
                     </div>
                 )}
                  {lineDetails.map((detail, index) => detail.data && (
-                    <div key={detail.key}>
+                    <div 
+                      key={detail.key}
+                      onMouseEnter={() => setHighlightedLine(detail.key)}
+                      onMouseLeave={() => setHighlightedLine(null)}
+                      className="cursor-pointer"
+                    >
                         <h3 className="font-headline text-xl flex items-center gap-2">
                             {detail.icon} {detail.title}
                         </h3>
