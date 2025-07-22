@@ -4,6 +4,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { UserInputProvider } from '@/context/UserInputContext';
+import { FirebaseProvider } from '@/context/FirebaseContext';
 
 export const metadata: Metadata = {
   title: 'Cosmic Insights',
@@ -23,16 +24,18 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <UserInputProvider>
-          <SidebarProvider>
-            <div className="flex min-h-screen">
-              <AppSidebar />
-              <main className="flex-1">
-                {children}
-              </main>
-            </div>
-          </SidebarProvider>
-        </UserInputProvider>
+        <FirebaseProvider>
+          <UserInputProvider>
+            <SidebarProvider>
+              <div className="flex min-h-screen">
+                <AppSidebar />
+                <main className="flex-1">
+                  {children}
+                </main>
+              </div>
+            </SidebarProvider>
+          </UserInputProvider>
+        </FirebaseProvider>
         <Toaster />
       </body>
     </html>

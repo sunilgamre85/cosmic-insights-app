@@ -1,6 +1,8 @@
+
 "use client";
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { useAuth } from "./FirebaseContext";
 
 type UserDetails = {
   name: string | null;
@@ -9,36 +11,46 @@ type UserDetails = {
 
 type UserInputContextType = {
   userDetails: UserDetails;
-  setUserDetails: (details: UserDetails) => void;
+  setUserDetails: (details: Partial<UserDetails>) => void;
 };
 
 const UserInputContext = createContext<UserInputContextType | undefined>(undefined);
 
-const USER_DETAILS_STORAGE_KEY = "cosmicInsightsUserDetails";
+const USER_DETAILS_STORAGE_KEY_PREFIX = "cosmicInsightsUserDetails";
 
 export function UserInputProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [userDetails, setUserDetailsState] = useState<UserDetails>({
     name: null,
     dateOfBirth: null,
   });
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  const storageKey = user ? `${USER_DETAILS_STORAGE_KEY_PREFIX}_${user.uid}` : "cosmicInsightsUserDetails_guest";
 
   useEffect(() => {
+    if (user && user.email) {
+        setUserDetailsState(prev => ({ ...prev, name: user.email?.split('@')[0] || null }));
+    } else {
+        setUserDetailsState({ name: null, dateOfBirth: null });
+    }
+  
     try {
-      const storedDetails = localStorage.getItem(USER_DETAILS_STORAGE_KEY);
+      const storedDetails = localStorage.getItem(storageKey);
       if (storedDetails) {
-        setUserDetailsState(JSON.parse(storedDetails));
+        setUserDetailsState(prev => ({...prev, ...JSON.parse(storedDetails)}));
       }
     } catch (error) {
         console.error("Failed to read user details from localStorage", error);
     }
     setIsInitialized(true);
-  }, []);
+  }, [user, storageKey]);
 
-  const setUserDetails = (details: UserDetails) => {
+  const setUserDetails = (details: Partial<UserDetails>) => {
     try {
-      localStorage.setItem(USER_DETAILS_STORAGE_KEY, JSON.stringify(details));
-      setUserDetailsState(details);
+      const newDetails = { ...userDetails, ...details };
+      localStorage.setItem(storageKey, JSON.stringify(newDetails));
+      setUserDetailsState(newDetails);
     } catch (error) {
         console.error("Failed to save user details to localStorage", error);
     }

@@ -8,8 +8,6 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarContent,
-  SidebarTrigger,
-  SidebarInset,
 } from '@/components/ui/sidebar';
 import {
   Home,
@@ -18,7 +16,6 @@ import {
   Sparkles,
   Newspaper,
   User,
-  Settings,
   Shield,
   Star,
   HeartHandshake,
@@ -27,9 +24,13 @@ import {
   BookOpen,
   CalendarDays,
   Smile,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/FirebaseContext';
+import { Button } from '../ui/button';
 
 const menuItems = [
   { href: '/', icon: Home, label: 'Home' },
@@ -52,11 +53,18 @@ const adminItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, signOutUser } = useAuth();
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/';
     return pathname.startsWith(path);
   };
+  
+  const handleSignOut = async () => {
+    await signOutUser();
+    router.push('/login');
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r-0 md:border-r">
@@ -112,10 +120,21 @@ export function AppSidebar() {
         <SidebarFooter className="p-2">
             <div className="flex items-center gap-2 p-2 rounded-md bg-sidebar-accent/20">
                 <User className="w-8 h-8" />
-                <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                    <span className="font-semibold text-sm">Guest User</span>
-                    <span className="text-xs text-sidebar-foreground/70">Login for premium</span>
+                <div className="flex flex-col group-data-[collapsible=icon]:hidden flex-1">
+                    <span className="font-semibold text-sm truncate">{user ? user.email : 'Guest User'}</span>
+                    <span className="text-xs text-sidebar-foreground/70">
+                        {user ? 'Logged In' : 'Login for premium'}
+                    </span>
                 </div>
+                {user ? (
+                    <Button variant="ghost" size="icon" onClick={handleSignOut} className="group-data-[collapsible=icon]:hidden h-8 w-8 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent">
+                        <LogOut className="h-4 w-4" />
+                    </Button>
+                ) : (
+                     <Button variant="ghost" size="icon" onClick={() => router.push('/login')} className="group-data-[collapsible=icon]:hidden h-8 w-8 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent">
+                        <LogIn className="h-4 w-4" />
+                    </Button>
+                )}
             </div>
         </SidebarFooter>
     </Sidebar>
