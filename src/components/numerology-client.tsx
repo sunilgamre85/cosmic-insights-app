@@ -129,8 +129,8 @@ export function NumerologyClient() {
   ] : [];
 
   return (
-    <div className="grid lg:grid-cols-5 gap-8">
-      <Card className="shadow-lg lg:col-span-2">
+    <div className="space-y-8">
+      <Card className="shadow-lg w-full max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="font-headline">Enter Your Details</CardTitle>
           <CardDescription>Provide your full name and date of birth for an accurate reading.</CardDescription>
@@ -214,92 +214,92 @@ export function NumerologyClient() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg lg:col-span-3">
-        <CardHeader>
-          <CardTitle className="font-headline">Your Numerology Report</CardTitle>
-          <CardDescription>Your personalized numerology insights will appear below.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin mb-4" />
-              <p>Calculating your cosmic blueprint...</p>
-            </div>
-          )}
-          {!isLoading && !result && (
-            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center text-muted-foreground">
-              <Gem className="h-12 w-12 mb-4" />
-              <p>Your numbers hold the key.</p>
-              <p className="text-sm">Enter your details to generate your report.</p>
-            </div>
-          )}
-          {result && (
-            <ScrollArea className="h-[calc(100vh-300px)] w-full pr-4">
-            <div className="space-y-6">
-              
-              <Accordion type="single" collapsible defaultValue="life-path" className="w-full">
-                {analysisItems.map(item => (
-                  <AccordionItem value={item.id} key={item.id}>
-                    <AccordionTrigger className="font-headline text-lg hover:no-underline">
-                      <div className="flex items-center">
-                          {item.icon}
-                          <span className="flex-1">{item.title}</span>
-                          <Badge className="text-xl mr-4">{item.value}</Badge>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="text-base whitespace-pre-wrap">
-                      {item.content}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-              
-              <Separator />
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin mb-4" />
+          <p>Calculating your cosmic blueprint...</p>
+        </div>
+      )}
 
-              <Card className="bg-secondary">
-                  <CardHeader>
-                      <CardTitle className="font-headline text-xl flex items-center gap-2"><Diamond className="h-5 w-5 text-primary"/> Lucky Elements</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-4">
-                      <div><span className="font-semibold">Numbers:</span> {result.luckyElements.luckyNumbers.map(n => <Badge key={n} variant="outline" className="text-lg ml-1 bg-background">{n}</Badge>)}</div>
-                      <div><span className="font-semibold">Color:</span> <Badge style={{backgroundColor: result.luckyElements.luckyColor.toLowerCase()}} className="text-lg ml-1 text-white">{result.luckyElements.luckyColor}</Badge></div>
-                      <div><span className="font-semibold">Day:</span> <Badge variant="outline" className="text-lg ml-1 bg-background">{result.luckyElements.luckyDay}</Badge></div>
-                      <div><span className="font-semibold">Gemstone:</span> <Badge variant="outline" className="text-lg ml-1 bg-background">{result.luckyElements.luckyGemstone}</Badge></div>
-                  </CardContent>
-              </Card>
+      {result && (
+        <Card className="shadow-lg">
+            <CardHeader>
+                <CardTitle className="font-headline">Your Numerology Report</CardTitle>
+                <CardDescription>Your personalized numerology insights will appear below.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-6">
+                
+                <Accordion type="single" collapsible defaultValue="life-path" className="w-full">
+                    {analysisItems.map(item => (
+                    <AccordionItem value={item.id} key={item.id}>
+                        <AccordionTrigger className="font-headline text-lg hover:no-underline">
+                        <div className="flex items-center">
+                            {item.icon}
+                            <span className="flex-1">{item.title}</span>
+                            <Badge className="text-xl mr-4">{item.value}</Badge>
+                        </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="text-base whitespace-pre-wrap">
+                        {item.content}
+                        </AccordionContent>
+                    </AccordionItem>
+                    ))}
+                </Accordion>
+                
+                <Separator />
 
-              <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-xl flex items-center gap-2"><BookOpen className="h-5 w-5 text-primary"/> Overall Analysis</CardTitle>
-                </CardHeader>
-                <CardContent className="text-base whitespace-pre-wrap">
-                    {result.overallAnalysis}
-                </CardContent>
-              </Card>
+                <Card className="bg-secondary">
+                    <CardHeader>
+                        <CardTitle className="font-headline text-xl flex items-center gap-2"><Diamond className="h-5 w-5 text-primary"/> Lucky Elements</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-4">
+                        <div><span className="font-semibold">Numbers:</span> {result.luckyElements.luckyNumbers.map(n => <Badge key={n} variant="outline" className="text-lg ml-1 bg-background">{n}</Badge>)}</div>
+                        <div><span className="font-semibold">Color:</span> <Badge style={{backgroundColor: result.luckyElements.luckyColor.toLowerCase()}} className="text-lg ml-1 text-white">{result.luckyElements.luckyColor}</Badge></div>
+                        <div><span className="font-semibold">Day:</span> <Badge variant="outline" className="text-lg ml-1 bg-background">{result.luckyElements.luckyDay}</Badge></div>
+                        <div><span className="font-semibold">Gemstone:</span> <Badge variant="outline" className="text-lg ml-1 bg-background">{result.luckyElements.luckyGemstone}</Badge></div>
+                    </CardContent>
+                </Card>
 
-              <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-xl flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary"/> Career Suggestions</CardTitle>
-                </CardHeader>
-                <CardContent className="text-base whitespace-pre-wrap">
-                    {result.careerSuggestions}
-                </CardContent>
-              </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-xl flex items-center gap-2"><BookOpen className="h-5 w-5 text-primary"/> Overall Analysis</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-base whitespace-pre-wrap">
+                        {result.overallAnalysis}
+                    </CardContent>
+                </Card>
 
-              <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-xl flex items-center gap-2"><Heart className="h-5 w-5 text-primary"/> Relationship Compatibility</CardTitle>
-                </CardHeader>
-                <CardContent className="text-base whitespace-pre-wrap">
-                    {result.relationshipCompatibility}
-                </CardContent>
-              </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-xl flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary"/> Career Suggestions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-base whitespace-pre-wrap">
+                        {result.careerSuggestions}
+                    </CardContent>
+                </Card>
 
-            </div>
-            </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-xl flex items-center gap-2"><Heart className="h-5 w-5 text-primary"/> Relationship Compatibility</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-base whitespace-pre-wrap">
+                        {result.relationshipCompatibility}
+                    </CardContent>
+                </Card>
+
+                </div>
+            </CardContent>
+        </Card>
+      )}
+
+      {!isLoading && !result && (
+        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center text-muted-foreground">
+          <Gem className="h-12 w-12 mb-4" />
+          <p>Your numbers hold the key.</p>
+          <p className="text-sm">Enter your details to generate your report.</p>
+        </div>
+      )}
     </div>
   );
 }
