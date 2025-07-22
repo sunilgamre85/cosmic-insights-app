@@ -19,7 +19,6 @@ import { matchKundli, type GunaScore, type KundliProfile } from "@/lib/kundli-ma
 import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
 import { useUserInput } from "@/context/UserInputContext";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Progress } from "./ui/progress";
 
@@ -46,7 +45,7 @@ export function KundliMatchingClient() {
   const [person1CalendarOpen, setPerson1CalendarOpen] = useState(false);
   const [person2CalendarOpen, setPerson2CalendarOpen] = useState(false);
   const { toast } = useToast();
-  const { userDetails, setUserDetails } = useUserInput();
+  const { userDetails } = useUserInput();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -176,8 +175,8 @@ export function KundliMatchingClient() {
   );
 
   return (
-    <div className="grid lg:grid-cols-5 gap-8">
-      <Card className="lg:col-span-3 shadow-lg">
+    <div className="space-y-8">
+      <Card className="shadow-lg w-full max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle className="font-headline">Enter Birth Details</CardTitle>
           <CardDescription>Provide details for both individuals for a compatibility report.</CardDescription>
@@ -206,58 +205,60 @@ export function KundliMatchingClient() {
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-2 shadow-lg">
-        <CardHeader>
-          <CardTitle className="font-headline">Compatibility Report</CardTitle>
-          <CardDescription>The cosmic connection score will appear below.</CardDescription>
-        </CardHeader>
-        <CardContent className="min-h-[400px]">
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin mb-4" />
-              <p>Comparing cosmic blueprints...</p>
-            </div>
-          )}
-          {!isLoading && !result && (
-            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-              <Users className="h-12 w-12 mb-4" />
-              <p>Discover your compatibility.</p>
-              <p className="text-sm">Enter birth details to generate the report.</p>
-            </div>
-          )}
-          {result && (
-            <ScrollArea className="h-[calc(100vh-220px)] w-full pr-4">
-            <div className="space-y-4">
-                <div className="text-center">
-                    <h3 className="font-headline text-xl">Compatibility Score (Guna Milan)</h3>
-                    <p className="text-5xl font-bold text-primary">{result.total}/36</p>
-                    <Progress value={(result.total / 36) * 100} className="mt-2 h-2" />
-                </div>
-                <Separator />
-                <div>
-                  <h4 className="font-headline text-lg mb-2">Detailed Guna Milan Score</h4>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Guna (Koota)</TableHead>
-                                <TableHead className="text-right">Score</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {result.details.map((guna) => (
-                                <TableRow key={guna.guna}>
-                                    <TableCell className="font-medium">{guna.guna}</TableCell>
-                                    <TableCell className="text-right">{guna.score} / {guna.max}</TableCell>
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center h-full text-muted-foreground pt-8">
+          <Loader2 className="h-8 w-8 animate-spin mb-4" />
+          <p>Comparing cosmic blueprints...</p>
+        </div>
+      )}
+
+      {result && (
+        <Card className="shadow-lg w-full max-w-2xl mx-auto">
+            <CardHeader>
+            <CardTitle className="font-headline">Compatibility Report</CardTitle>
+            <CardDescription>The cosmic connection score will appear below.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ScrollArea className="h-full w-full pr-4">
+                <div className="space-y-4">
+                    <div className="text-center">
+                        <h3 className="font-headline text-xl">Compatibility Score (Guna Milan)</h3>
+                        <p className="text-5xl font-bold text-primary">{result.total}/36</p>
+                        <Progress value={(result.total / 36) * 100} className="mt-2 h-2" />
+                    </div>
+                    <Separator />
+                    <div>
+                    <h4 className="font-headline text-lg mb-2">Detailed Guna Milan Score</h4>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Guna (Koota)</TableHead>
+                                    <TableHead className="text-right">Score</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {result.details.map((guna) => (
+                                    <TableRow key={guna.guna}>
+                                        <TableCell className="font-medium">{guna.guna}</TableCell>
+                                        <TableCell className="text-right">{guna.score} / {guna.max}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
-            </div>
-            </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
+                </ScrollArea>
+            </CardContent>
+        </Card>
+      )}
+
+      {!isLoading && !result && (
+        <div className="flex flex-col items-center justify-center text-center text-muted-foreground pt-8">
+          <Users className="h-12 w-12 mb-4" />
+          <p>Discover your compatibility.</p>
+          <p className="text-sm">Enter birth details to generate the report.</p>
+        </div>
+      )}
     </div>
   );
 }

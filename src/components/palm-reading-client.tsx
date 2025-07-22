@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X } from "lucide-react";
+import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles } from "lucide-react";
 import { analyzePalm, type AnalyzePalmOutput } from "@/ai/flows/ai-palm-reading";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
@@ -96,8 +96,8 @@ export function PalmReadingClient() {
   ] : [];
 
   return (
-    <div className="grid md:grid-cols-2 gap-8">
-      <Card className="shadow-lg">
+    <div className="space-y-8">
+      <Card className="shadow-lg w-full max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2"><Upload className="h-6 w-6" /> Upload Your Palm</CardTitle>
           <CardDescription>Upload a clear image of your dominant hand's palm.</CardDescription>
@@ -143,44 +143,47 @@ export function PalmReadingClient() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> AI Analysis</CardTitle>
-          <CardDescription>Your personalized palm reading results will appear here.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin mb-4" />
-              <p>Our AI is reading your palm...</p>
-              <p className="text-sm">This may take a moment.</p>
-            </div>
-          )}
-          {!isLoading && !result && (
-            <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center text-muted-foreground">
-              <Hand className="h-12 w-12 mb-4" />
-              <p>Your future awaits.</p>
-              <p className="text-sm">Upload an image to begin.</p>
-            </div>
-          )}
-          {result && (
-            <Accordion type="single" collapsible defaultValue="Life Line" className="w-full">
-              {lineDetails.map(detail => (
-                <AccordionItem value={detail.title} key={detail.title}>
-                  <AccordionTrigger className="font-headline text-lg hover:no-underline">
-                    <div className="flex items-center">
-                        {detail.icon} {detail.title}
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="text-base">
-                    {detail.content}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          )}
-        </CardContent>
-      </Card>
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center text-muted-foreground pt-8">
+            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <p>Our AI is reading your palm...</p>
+            <p className="text-sm">This may take a moment.</p>
+        </div>
+      )}
+
+      {result && (
+        <Card className="shadow-lg w-full max-w-2xl mx-auto">
+            <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> AI Analysis</CardTitle>
+            <CardDescription>Your personalized palm reading results will appear here.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Accordion type="single" collapsible defaultValue="Life Line" className="w-full">
+                {lineDetails.map(detail => (
+                    <AccordionItem value={detail.title} key={detail.title}>
+                    <AccordionTrigger className="font-headline text-lg hover:no-underline">
+                        <div className="flex items-center">
+                            {detail.icon} {detail.title}
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="text-base">
+                        {detail.content}
+                    </AccordionContent>
+                    </AccordionItem>
+                ))}
+                </Accordion>
+            </CardContent>
+        </Card>
+      )}
+      
+      {!isLoading && !result && (
+         <div className="flex flex-col items-center justify-center text-center text-muted-foreground pt-8">
+            <Hand className="h-12 w-12 mb-4" />
+            <p>Your future awaits.</p>
+            <p className="text-sm">Upload an image to begin.</p>
+        </div>
+      )}
+
     </div>
   );
 }

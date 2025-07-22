@@ -21,13 +21,12 @@ export const HoroscopeClient: FC<HoroscopeClientProps> = ({ signs, horoscopes })
   const currentHoroscope = selectedSign ? horoscopes[selectedSign] : null;
 
   return (
-    <div className="grid md:grid-cols-3 gap-8">
-      <div className="md:col-span-2">
+    <div className="space-y-8">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="font-headline">Choose Your Sign</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+          <CardContent className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
             {signs.map((sign) => (
               <button
                 key={sign.name}
@@ -46,10 +45,9 @@ export const HoroscopeClient: FC<HoroscopeClientProps> = ({ signs, horoscopes })
             ))}
           </CardContent>
         </Card>
-      </div>
       
-      <div className="md:col-span-1">
-        <Card className="shadow-lg sticky top-24">
+      
+        <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="font-headline">
               {selectedSign ? `${selectedSign}'s Horoscope` : "Your Daily Reading"}
@@ -73,7 +71,6 @@ export const HoroscopeClient: FC<HoroscopeClientProps> = ({ signs, horoscopes })
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 };

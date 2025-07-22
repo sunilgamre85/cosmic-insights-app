@@ -78,8 +78,8 @@ export function MobileNumerologyClient() {
   }
 
   return (
-    <div className="grid md:grid-cols-2 gap-8">
-      <Card className="shadow-lg">
+    <div className="space-y-8">
+      <Card className="shadow-lg w-full max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="font-headline">Check Your Mobile Number Vibration</CardTitle>
           <CardDescription>Enter your details and mobile number for a compatibility analysis.</CardDescription>
@@ -172,49 +172,50 @@ export function MobileNumerologyClient() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="font-headline">Your Mobile Number Report</CardTitle>
-          <CardDescription>The vibration and meaning of your number will appear below.</CardDescription>
-        </CardHeader>
-        <CardContent className="min-h-[400px]">
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin mb-4" />
-              <p>Calculating your number's cosmic frequency...</p>
-            </div>
-          )}
-          {!isLoading && !result && (
-            <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-              <Smartphone className="h-12 w-12 mb-4" />
-              <p>Is your mobile number lucky for you?</p>
-              <p className="text-sm">Enter your details to find out.</p>
-            </div>
-          )}
-          {result && (
-            <ScrollArea className="h-full w-full pr-4">
-            <div className="space-y-6 animate-in fade-in-50 duration-500">
-                <div className="text-center p-4 rounded-lg bg-secondary">
-                    <h3 className="font-headline text-lg text-secondary-foreground">Final Number</h3>
-                    <p className="text-6xl font-bold text-primary">{result.mobileNumberTotal}</p>
-                    <p className="text-sm text-muted-foreground">Original Number: {result.originalMobileNumber}</p>
-                </div>
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center text-muted-foreground pt-8">
+            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <p>Calculating your number's cosmic frequency...</p>
+        </div>
+      )}
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-xl">Compatibility Analysis</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-base text-foreground/90 whitespace-pre-wrap">
-                           {result.compatibilityAnalysis}
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-            </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
+      {result && (
+        <Card className="shadow-lg w-full max-w-2xl mx-auto">
+            <CardHeader>
+                <CardTitle className="font-headline">Your Mobile Number Report</CardTitle>
+                <CardDescription>The vibration and meaning of your number will appear below.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-6 animate-in fade-in-50 duration-500">
+                    <div className="text-center p-4 rounded-lg bg-secondary">
+                        <h3 className="font-headline text-lg text-secondary-foreground">Final Number</h3>
+                        <p className="text-6xl font-bold text-primary">{result.mobileNumberTotal}</p>
+                        <p className="text-sm text-muted-foreground">Original Number: {result.originalMobileNumber}</p>
+                    </div>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline text-xl">Compatibility Analysis</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-base text-foreground/90 whitespace-pre-wrap">
+                            {result.compatibilityAnalysis}
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </CardContent>
+        </Card>
+      )}
+
+      {!isLoading && !result && (
+        <div className="flex flex-col items-center justify-center text-center text-muted-foreground pt-8">
+            <Smartphone className="h-12 w-12 mb-4" />
+            <p>Is your mobile number lucky for you?</p>
+            <p className="text-sm">Enter your details to find out.</p>
+        </div>
+      )}
+
     </div>
   );
 }
