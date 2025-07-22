@@ -144,6 +144,10 @@ export function FaceReadingClient() {
     }
   };
   
+  const formatTitle = (title: string) => {
+    return title.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+  }
+
   return (
     <div className="space-y-8">
       <Card className="shadow-lg max-w-2xl mx-auto">
@@ -237,10 +241,19 @@ export function FaceReadingClient() {
             </CardHeader>
             <CardContent className="space-y-4">
                 {Object.entries(result).map(([feature, analysis]) => (
-                    (analysis && typeof analysis === 'string') && (
+                    analysis && (
                         <div key={feature}>
-                            <h3 className="font-headline text-lg capitalize text-primary">{feature.replace(/([A-Z])/g, ' $1')}</h3>
-                            <p className="text-foreground/90">{analysis}</p>
+                            <h3 className="font-headline text-xl capitalize text-primary">{formatTitle(feature)}</h3>
+                            <div className="mt-2 pl-4 border-l-2 border-primary/20 space-y-2">
+                                <div>
+                                    <h4 className="font-semibold text-sm text-foreground/80">Observation:</h4>
+                                    <p className="text-foreground/90">{analysis.observation}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-semibold text-sm text-foreground/80">Interpretation:</h4>
+                                    <p className="text-foreground/90">{analysis.interpretation}</p>
+                                </div>
+                            </div>
                         </div>
                     )
                 ))}
