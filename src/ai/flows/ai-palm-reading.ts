@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview Analyzes user-uploaded images of both left and right palms to provide a comprehensive reading.
+ * @fileOverview Analyzes user-uploaded images of one or both palms to provide a comprehensive reading.
  *
- * - analyzePalms - A function that handles the dual palm image analysis process.
+ * - analyzePalms - A function that handles the palm image analysis process.
  * - AnalyzePalmsInput - The input type for the analyzePalms function.
  * - AnalyzePalmsOutput - The return type for the analyzePalms function.
  */
@@ -14,11 +14,13 @@ import {z} from 'genkit';
 const AnalyzePalmsInputSchema = z.object({
   leftHandPhoto: z
     .string()
+    .optional()
     .describe(
       "A photo of the user's left palm, as a data URI that must include a MIME type and use Base64 encoding."
     ),
   rightHandPhoto: z
     .string()
+    .optional()
     .describe(
       "A photo of the user's right palm, as a data URI that must include a MIME type and use Base64 encoding."
     ),
@@ -46,11 +48,13 @@ const SinglePalmAnalysisSchema = z.object({
   headline: LineSchema.optional().describe('Analysis and path of the head line.'),
   fateLine: LineSchema.optional().describe('Analysis and path of the fate line (if visible).'),
   sunLine: LineSchema.optional().describe('Analysis and path of the sun line, also known as the Apollo line (if visible).'),
+  healthLine: LineSchema.optional().describe('Analysis and path of the health line (if visible).'),
+  marriageLine: LineSchema.optional().describe('Analysis and path of the marriage line(s) (if visible).'),
   generalAnalysis: GeneralAnalysisSchema.optional().describe('General analysis of other important palm features.'),
 });
 
 const CombinedReportSchema = z.object({
-    personalityTraits: z.string().describe("Synthesized analysis of personality traits based on both palms."),
+    personalityTraits: z.string().describe("Synthesized analysis of personality traits based on the provided palms."),
     loveAndRelationships: z.string().describe("Synthesized analysis regarding love, emotions, and relationships."),
     careerAndSuccess: z.string().describe("Synthesized analysis on career, ambition, and potential for success."),
     healthAndVitality: z.string().describe("Synthesized analysis concerning health, energy, and vitality."),
@@ -58,9 +62,9 @@ const CombinedReportSchema = z.object({
 });
 
 const AnalyzePalmsOutputSchema = z.object({
-  leftHandAnalysis: SinglePalmAnalysisSchema.describe("The detailed analysis for the left hand, representing potential and innate traits."),
-  rightHandAnalysis: SinglePalmAnalysisSchema.describe("The detailed analysis for the right hand, representing actions and current life path."),
-  combinedReport: CombinedReportSchema.describe("A synthesized, structured report comparing and contrasting the two hands to provide a complete, holistic reading."),
+  leftHandAnalysis: SinglePalmAnalysisSchema.optional().describe("The detailed analysis for the left hand, representing potential and innate traits."),
+  rightHandAnalysis: SinglePalmAnalysisSchema.optional().describe("The detailed analysis for the right hand, representing actions and current life path."),
+  combinedReport: CombinedReportSchema.optional().describe("A synthesized, structured report comparing and contrasting the two hands to provide a complete, holistic reading. This is only generated if both hands are provided."),
   error: z.string().optional().describe('An error message if the palms could not be analyzed.'),
 });
 export type AnalyzePalmsOutput = z.infer<typeof AnalyzePalmsOutputSchema>;
@@ -76,39 +80,44 @@ const prompt = ai.definePrompt({
   config: {
     temperature: 0.2,
   },
-  prompt: `You are an expert palm reader. Your task is to analyze the user's left and right palms from the provided images and deliver a comprehensive, synthesized reading.
+  prompt: `You are an expert palm reader. Your task is to analyze the user's provided palm images and deliver a comprehensive reading.
 
-Left Palm (Potential & Karma): {{media url=leftHandPhoto}}
-Right Palm (Action & Current Life): {{media url=rightHandPhoto}}
+The user has provided the following images:
+{{#if leftHandPhoto}}Left Palm (Represents potential & innate traits): {{media url=leftHandPhoto}}{{/if}}
+{{#if rightHandPhoto}}Right Palm (Represents action & current life): {{media url=rightHandPhoto}}{{/if}}
 
 Your analysis must be comprehensive. Please perform the following steps:
 
 PART 1: INDIVIDUAL HAND ANALYSIS
-For EACH HAND (Left and Right) separately:
+For EACH HAND provided:
 1.  **Analyze General Features:**
     *   Analyze the overall hand shape (classify as Earth, Air, Fire, or Water hand and explain the meaning).
-    *   Analyze the prominent mounts, especially the Mounts of Venus, Jupiter, and Saturn, and describe their implications for the person's character and life.
+    *   Analyze the prominent mounts, especially Venus, Jupiter, Saturn, and Mercury, and describe their implications.
 2.  **Identify and Analyze Major Lines:**
-    *   Identify and analyze the major palm lines visible in the image: Life Line, Heart Line, Head Line. These three lines are almost always present.
-    *   Also, identify and analyze the Fate Line and the Sun Line (also called the Apollo Line) IF they are clearly visible. If they are not visible or are very faint, do not include them in the analysis for that hand.
+    *   Identify and analyze the major palm lines visible in the image: Life Line, Heart Line, Head Line.
+    *   Also, identify and analyze other important lines IF they are clearly visible: Fate Line, Sun Line (Apollo), Health Line, Marriage Line(s). If they are not visible or very faint, do not include them in the analysis for that hand.
 3.  **Provide Line Coordinates:**
     *   For each line you positively identify, you MUST provide the coordinates for its path.
-    *   The path should be an array of {x, y} points.
-    *   The coordinates must be normalized, ranging from 0.0 to 1.0, where (0,0) is the top-left corner and (1,1) is the bottom-right corner of the image.
-    *   Trace each line from its start to its end with a reasonable number of points (e.g., 5-10 points) to capture its curve accurately.
+    *   The path should be an array of {x, y} points, normalized from 0.0 to 1.0.
+    *   Trace each line with enough points (e.g., 5-10) to capture its curve accurately.
 
-PART 2: COMBINED REPORT
-After analyzing both hands individually, create a **Combined Report**. Compare and contrast the left hand (potential) with the right hand (action). Synthesize all the information from both palms into a holistic, structured report with the following sections:
-- **personalityTraits:** Describe the user's overall personality, character, strengths, and weaknesses.
-- **loveAndRelationships:** Provide insights into their emotional nature, romantic life, and partnerships.
-- **careerAndSuccess:** Analyze their ambition, work ethic, potential for fame, and career path.
-- **healthAndVitality:** Discuss their overall energy levels, constitution, and any potential health indicators from the life line.
-- **warningsAndOpportunities:** Point out any significant karmic lessons, unique strengths, or areas needing caution.
+PART 2: FINAL REPORT
+{{#if leftHandPhoto}}{{#if rightHandPhoto}}
+**Create a Combined Report.** Compare and contrast the left hand (potential) with the right hand (action). Synthesize all the information into a holistic, structured report with these sections:
+- personalityTraits, loveAndRelationships, careerAndSuccess, healthAndVitality, warningsAndOpportunities.
+{{else}}
+**Create a Single Hand Report.** Provide a summary report based on the single hand provided. Structure the report into these sections:
+- personalityTraits, loveAndRelationships, careerAndSuccess, healthAndVitality, warningsAndOpportunities.
+{{/if}}{{else}}
+**Create a Single Hand Report.** Provide a summary report based on the single hand provided. Structure the report into these sections:
+- personalityTraits, loveAndRelationships, careerAndSuccess, healthAndVitality, warningsAndOpportunities.
+{{/if}}
 
 PART 3: ERROR HANDLING
-*   If you cannot clearly identify the palm or its lines from an image, set the 'error' field with a helpful message like "The image for the [left/right] hand is unclear. Please provide a clear, well-lit photo of a palm." In this case, do not attempt to provide an analysis for the unclear hand.
+*   If an image is unclear, set the 'error' field with a helpful message. Do not attempt to analyze an unclear hand.
+*   If no images are provided, set the 'error' field to "No palm images were provided for analysis."
 
-Return the full analysis for both hands, all coordinate paths, and the final structured report in the requested JSON format.`,
+Return the full analysis in the requested JSON format.`,
 });
 
 const analyzePalmsFlow = ai.defineFlow(
@@ -118,6 +127,9 @@ const analyzePalmsFlow = ai.defineFlow(
     outputSchema: AnalyzePalmsOutputSchema,
   },
   async input => {
+    if (!input.leftHandPhoto && !input.rightHandPhoto) {
+        return { error: "Please upload at least one palm image for analysis." };
+    }
     const {output} = await prompt(input);
     if (!output) {
         throw new Error("The AI model failed to return a valid analysis. The image might be unclear.");

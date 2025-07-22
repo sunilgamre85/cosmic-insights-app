@@ -1,22 +1,24 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes, BookCopy, User, Briefcase, Shield, Download } from "lucide-react";
+import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes, BookCopy, User, Briefcase, Shield, Download, LifeBuoy } from "lucide-react";
 import { analyzePalms, type AnalyzePalmsOutput } from "@/ai/flows/ai-palm-reading";
 import { Separator } from "./ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import React from 'react';
 import { cn } from "@/lib/utils";
 import html2pdf from 'html2pdf.js';
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 type SinglePalmAnalysis = AnalyzePalmsOutput['leftHandAnalysis'];
+type AnalysisMode = 'left' | 'right' | 'both';
 
 const lineColors = {
     lifeLine: 'stroke-red-500',
@@ -57,6 +59,7 @@ export function PalmReadingClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalyzePalmsOutput | null>(null);
   const [highlightedLine, setHighlightedLine] = useState<string | null>(null);
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('both');
   const reportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
@@ -101,12 +104,21 @@ export function PalmReadingClient() {
     const fileInput = document.getElementById(`palm-image-upload-${hand}`) as HTMLInputElement;
     if(fileInput) fileInput.value = "";
   }
+  
+  const isAnalyzeDisabled = useMemo(() => {
+    if (isLoading) return true;
+    if (analysisMode === 'left' && !leftHandFile) return true;
+    if (analysisMode === 'right' && !rightHandFile) return true;
+    if (analysisMode === 'both' && (!leftHandFile || !rightHandFile)) return true;
+    return false;
+  }, [isLoading, analysisMode, leftHandFile, rightHandFile]);
+
 
   const handleAnalyze = async () => {
-    if (!leftHandFile || !rightHandFile || !leftPreviewUrl || !rightPreviewUrl) {
-      toast({
-        title: "Missing Image",
-        description: "Please upload images for both left and right hands.",
+    if (isAnalyzeDisabled) {
+       toast({
+        title: "Missing Image(s)",
+        description: "Please upload the required image(s) for the selected analysis type.",
         variant: "destructive",
       });
       return;
@@ -118,8 +130,8 @@ export function PalmReadingClient() {
 
     try {
         const analysisResult = await analyzePalms({ 
-            leftHandPhoto: leftPreviewUrl,
-            rightHandPhoto: rightPreviewUrl
+            leftHandPhoto: analysisMode !== 'right' ? leftPreviewUrl! : undefined,
+            rightHandPhoto: analysisMode !== 'left' ? rightPreviewUrl! : undefined,
         });
         setResult(analysisResult);
     } catch (error) {
@@ -154,13 +166,13 @@ export function PalmReadingClient() {
       return `M ${points.map(p => `${p.x * 100}% ${p.y * 100}%`).join(' L ')}`;
   };
   
-  const FileUploader = ({hand, previewUrl, onFileChange, onRemove}: {hand: 'left' | 'right', previewUrl: string | null, onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void, onRemove: () => void}) => (
-    <div className="w-full">
+  const FileUploader = ({hand, previewUrl, onFileChange, onRemove, disabled = false}: {hand: 'left' | 'right', previewUrl: string | null, onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void, onRemove: () => void, disabled?: boolean}) => (
+    <div className={cn("w-full transition-opacity", disabled && "opacity-40 pointer-events-none")}>
         <h3 className="font-headline text-lg text-center mb-2 capitalize">{hand} Hand</h3>
         {!previewUrl ? (
         <Label
             htmlFor={`palm-image-upload-${hand}`}
-            className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary transition-colors"
+            className={cn("flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary transition-colors", disabled && "cursor-not-allowed")}
         >
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
             <FileImage className="w-10 h-10 mb-3 text-muted-foreground" />
@@ -169,12 +181,12 @@ export function PalmReadingClient() {
             </p>
             <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (MAX. 4MB)</p>
             </div>
-            <Input id={`palm-image-upload-${hand}`} type="file" className="hidden" onChange={onFileChange} accept="image/png, image/jpeg, image/webp" />
+            <Input id={`palm-image-upload-${hand}`} type="file" className="hidden" onChange={onFileChange} accept="image/png, image/jpeg, image/webp" disabled={disabled}/>
         </Label>
         ) : (
         <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
             <Image src={previewUrl} alt={`${hand} palm preview`} layout="fill" objectFit="contain" />
-            <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 z-10" onClick={onRemove}>
+            <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 z-10" onClick={onRemove} disabled={disabled}>
             <X className="h-4 w-4" />
             </Button>
         </div>
@@ -184,7 +196,7 @@ export function PalmReadingClient() {
 
   const AnalysisDisplay = ({ analysis, handTitle, previewUrl }: { analysis: SinglePalmAnalysis, handTitle: string, previewUrl: string | null }) => {
     const lineDetails = analysis ? [
-        ...(analysis.lifeLine ? [{ key: 'lifeLine', title: "Life Line", data: analysis.lifeLine, icon: <Hand className="h-5 w-5" /> }] : []),
+        ...(analysis.lifeLine ? [{ key: 'lifeLine', title: "Life Line", data: analysis.lifeLine, icon: <LifeBuoy className="h-5 w-5" /> }] : []),
         ...(analysis.headline ? [{ key: 'headline', title: "Head Line", data: analysis.headline, icon: <Brain className="h-5 w-5" /> }] : []),
         ...(analysis.heartLine ? [{ key: 'heartLine', title: "Heart Line", data: analysis.heartLine, icon: <Heart className="h-5 w-5" /> }] : []),
         ...(analysis.fateLine ? [{ key: 'fateLine', title: "Fate Line", data: analysis.fateLine, icon: <Sparkles className="h-5 w-5" /> }] : []),
@@ -287,23 +299,45 @@ export function PalmReadingClient() {
     <div className="space-y-8">
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><Upload className="h-6 w-6" /> Upload Your Palms</CardTitle>
-          <CardDescription>Upload clear images of both your left and right hands for a complete reading.</CardDescription>
+          <CardTitle className="font-headline flex items-center gap-2"><Upload className="h-6 w-6" /> Upload Your Palm(s)</CardTitle>
+          <CardDescription>Choose an analysis type, then upload clear images for your reading.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+            <div>
+                <Label className="text-base font-semibold">Analysis Type</Label>
+                <RadioGroup
+                    value={analysisMode}
+                    onValueChange={(value) => setAnalysisMode(value as AnalysisMode)}
+                    className="grid grid-cols-3 gap-4 mt-2"
+                >
+                    <Label className="flex items-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
+                        <RadioGroupItem value="left" id="left" />
+                        Left Hand
+                    </Label>
+                    <Label className="flex items-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
+                        <RadioGroupItem value="right" id="right" />
+                        Right Hand
+                    </Label>
+                    <Label className="flex items-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
+                        <RadioGroupItem value="both" id="both" />
+                        Both Hands
+                    </Label>
+                </RadioGroup>
+            </div>
+            <Separator />
           <div className="grid md:grid-cols-2 gap-8 items-start">
-             <FileUploader hand="left" previewUrl={leftPreviewUrl} onFileChange={handleFileChange('left')} onRemove={handleRemoveImage('left')} />
-             <FileUploader hand="right" previewUrl={rightPreviewUrl} onFileChange={handleFileChange('right')} onRemove={handleRemoveImage('right')} />
+             <FileUploader hand="left" previewUrl={leftPreviewUrl} onFileChange={handleFileChange('left')} onRemove={handleRemoveImage('left')} disabled={analysisMode === 'right'}/>
+             <FileUploader hand="right" previewUrl={rightPreviewUrl} onFileChange={handleFileChange('right')} onRemove={handleRemoveImage('right')} disabled={analysisMode === 'left'}/>
           </div>
             <div className="mt-8">
-                <Button onClick={handleAnalyze} disabled={!leftHandFile || !rightHandFile || isLoading} className="w-full">
+                <Button onClick={handleAnalyze} disabled={isAnalyzeDisabled} className="w-full">
                 {isLoading ? (
                     <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
                     </>
                 ) : (
                     <>
-                    <Wand2 className="mr-2 h-4 w-4" /> Analyze Palms with AI
+                    <Wand2 className="mr-2 h-4 w-4" /> Analyze with AI
                     </>
                 )}
                 </Button>
@@ -314,7 +348,7 @@ export function PalmReadingClient() {
       {isLoading && (
         <div className="flex flex-col items-center justify-center text-muted-foreground pt-8">
             <Loader2 className="h-8 w-8 animate-spin mb-4" />
-            <p>Our AI is reading your palms...</p>
+            <p>Our AI is reading your palm(s)...</p>
             <p className="text-sm">This may take a moment.</p>
         </div>
       )}
@@ -325,7 +359,9 @@ export function PalmReadingClient() {
               <div className="flex justify-between items-center">
                 <div>
                   <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> Your Comprehensive AI Analysis</CardTitle>
-                  <CardDescription>Left hand shows potential, right hand shows action. See the full story below.</CardDescription>
+                  <CardDescription>
+                    {result.combinedReport ? "Left hand shows potential, right hand shows action. See the full story below." : "Here is the analysis for the selected hand."}
+                  </CardDescription>
                 </div>
                 <Button onClick={handleDownload} variant="outline" size="icon">
                     <Download className="h-4 w-4"/>
@@ -335,23 +371,26 @@ export function PalmReadingClient() {
             </CardHeader>
             <CardContent ref={reportRef} className="space-y-8 p-6">
                 <div className="flex flex-col md:flex-row gap-8 items-start">
-                    {result.leftHandAnalysis && <AnalysisDisplay analysis={result.leftHandAnalysis} handTitle="Left Hand (Potential)" previewUrl={leftPreviewUrl} />}
-                    {result.rightHandAnalysis && <AnalysisDisplay analysis={result.rightHandAnalysis} handTitle="Right Hand (Action)" previewUrl={rightPreviewUrl} />}
+                    {result.leftHandAnalysis && <AnalysisDisplay analysis={result.leftHandAnalysis} handTitle="Left Hand" previewUrl={leftPreviewUrl} />}
+                    {result.rightHandAnalysis && <AnalysisDisplay analysis={result.rightHandAnalysis} handTitle="Right Hand" previewUrl={rightPreviewUrl} />}
                 </div>
 
-                <Separator />
-                
-                <div className="space-y-6">
-                    <ReportSection title="Personality Traits" content={result.combinedReport.personalityTraits} icon={<User className="h-6 w-6" />} />
-                    <Separator />
-                    <ReportSection title="Love & Relationships" content={result.combinedReport.loveAndRelationships} icon={<Heart className="h-6 w-6" />} />
-                    <Separator />
-                    <ReportSection title="Career & Success" content={result.combinedReport.careerAndSuccess} icon={<Briefcase className="h-6 w-6" />} />
-                    <Separator />
-                    <ReportSection title="Health & Vitality" content={result.combinedReport.healthAndVitality} icon={<Hand className="h-6 w-6" />} />
-                     <Separator />
-                    <ReportSection title="Warnings & Opportunities" content={result.combinedReport.warningsAndOpportunities} icon={<Shield className="h-6 w-6" />} />
-                </div>
+                {result.combinedReport && (
+                    <>
+                        <Separator />
+                        <div className="space-y-6">
+                            <ReportSection title="Overall Personality" content={result.combinedReport.personalityTraits} icon={<User className="h-6 w-6" />} />
+                            <Separator />
+                            <ReportSection title="Love & Relationships" content={result.combinedReport.loveAndRelationships} icon={<Heart className="h-6 w-6" />} />
+                            <Separator />
+                            <ReportSection title="Career & Success" content={result.combinedReport.careerAndSuccess} icon={<Briefcase className="h-6 w-6" />} />
+                            <Separator />
+                            <ReportSection title="Health & Vitality" content={result.combinedReport.healthAndVitality} icon={<Hand className="h-6 w-6" />} />
+                            <Separator />
+                            <ReportSection title="Warnings & Opportunities" content={result.combinedReport.warningsAndOpportunities} icon={<AlertTriangle className="h-6 w-6" />} />
+                        </div>
+                    </>
+                )}
             </CardContent>
         </Card>
       )}
@@ -359,8 +398,8 @@ export function PalmReadingClient() {
       {!isLoading && !result && (
          <div className="flex flex-col items-center justify-center text-center text-muted-foreground pt-8">
             <Hand className="h-12 w-12 mb-4" />
-            <p>Your future awaits in both your hands.</p>
-            <p className="text-sm">Upload both images to begin.</p>
+            <p>Your future awaits in your hands.</p>
+            <p className="text-sm">Select an analysis type and upload image(s) to begin.</p>
         </div>
       )}
 
