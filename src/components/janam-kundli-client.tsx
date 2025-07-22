@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, Loader2, Star, Shield, Sun, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Loader2, Star, Shield, Sun } from "lucide-react";
 import { janamKundliAnalysis, type JanamKundliAnalysisOutput } from "@/ai/flows/janam-kundli-analysis";
 import { ScrollArea } from "./ui/scroll-area";
 import { useUserInput } from "@/context/UserInputContext";
@@ -24,7 +24,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Separator } from "./ui/separator";
 import { LagnaChart } from "./lagna-chart";
 import { Badge } from "./ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 
 const formSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
@@ -104,13 +103,6 @@ export function JanamKundliClient() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Feature Temporarily Disabled</AlertTitle>
-                  <AlertDescription>
-                   The Janam Kundli generation is currently unavailable due to technical issues. The form will submit, but will return a sample report. We are working on a fix.
-                  </AlertDescription>
-              </Alert>
               <FormField
                 control={form.control}
                 name="name"
