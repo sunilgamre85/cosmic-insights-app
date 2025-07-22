@@ -1,19 +1,20 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes, BookCopy, User, Briefcase, Shield } from "lucide-react";
+import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes, BookCopy, User, Briefcase, Shield, Download } from "lucide-react";
 import { analyzePalms, type AnalyzePalmsOutput } from "@/ai/flows/ai-palm-reading";
 import { Separator } from "./ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import React from 'react';
 import { cn } from "@/lib/utils";
+import html2pdf from 'html2pdf.js';
 
 type SinglePalmAnalysis = AnalyzePalmsOutput['leftHandAnalysis'];
 
@@ -23,6 +24,8 @@ const lineColors = {
     heartLine: 'stroke-pink-500',
     fateLine: 'stroke-purple-500',
     sunLine: 'stroke-yellow-500',
+    healthLine: 'stroke-green-500',
+    marriageLine: 'stroke-orange-500',
 };
 
 const highlightedLineColors = {
@@ -31,6 +34,8 @@ const highlightedLineColors = {
     heartLine: 'stroke-pink-400',
     fateLine: 'stroke-purple-400',
     sunLine: 'stroke-yellow-400',
+    healthLine: 'stroke-green-400',
+    marriageLine: 'stroke-orange-400',
 };
 
 const lineTextColors = {
@@ -39,6 +44,8 @@ const lineTextColors = {
     heartLine: 'text-pink-500',
     fateLine: 'text-purple-500',
     sunLine: 'text-yellow-500',
+    healthLine: 'text-green-500',
+    marriageLine: 'text-orange-500',
 };
 
 
@@ -50,6 +57,7 @@ export function PalmReadingClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalyzePalmsOutput | null>(null);
   const [highlightedLine, setHighlightedLine] = useState<string | null>(null);
+  const reportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
   const handleFileChange = (hand: 'left' | 'right') => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,6 +134,20 @@ export function PalmReadingClient() {
       setIsLoading(false);
     }
   };
+
+  const handleDownload = () => {
+    const element = reportRef.current;
+    if (element) {
+        const opt = {
+            margin:       0.5,
+            filename:     'CosmicInsights_Palm_Report.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+  };
   
   const svgPath = (points: {x: number, y: number}[]) => {
       if (!points || points.length === 0) return "";
@@ -166,7 +188,9 @@ export function PalmReadingClient() {
         ...(analysis.headline ? [{ key: 'headline', title: "Head Line", data: analysis.headline, icon: <Brain className="h-5 w-5" /> }] : []),
         ...(analysis.heartLine ? [{ key: 'heartLine', title: "Heart Line", data: analysis.heartLine, icon: <Heart className="h-5 w-5" /> }] : []),
         ...(analysis.fateLine ? [{ key: 'fateLine', title: "Fate Line", data: analysis.fateLine, icon: <Sparkles className="h-5 w-5" /> }] : []),
-        ...(analysis.sunLine ? [{ key: 'sunLine', title: "Sun Line (Apollo)", data: analysis.sunLine, icon: <Sun className="h-5 w-5" /> }] : [])
+        ...(analysis.sunLine ? [{ key: 'sunLine', title: "Sun Line (Apollo)", data: analysis.sunLine, icon: <Sun className="h-5 w-5" /> }] : []),
+        ...(analysis.healthLine ? [{ key: 'healthLine', title: "Health Line", data: analysis.healthLine, icon: <Shield className="h-5 w-5" /> }] : []),
+        ...(analysis.marriageLine ? [{ key: 'marriageLine', title: "Marriage Line", data: analysis.marriageLine, icon: <Heart className="h-5 w-5" /> }] : []),
     ] : [];
 
     return (
@@ -245,16 +269,19 @@ export function PalmReadingClient() {
     );
   }
 
-  const ReportSection = ({ title, content, icon }: { title: string, content: string, icon: React.ReactNode }) => (
-    <div>
-        <h3 className="font-headline text-2xl flex items-center gap-2 text-primary">
-            {icon} {title}
-        </h3>
-        <p className="mt-2 text-base text-foreground/90 whitespace-pre-wrap">
-            {content}
-        </p>
-    </div>
-  );
+  const ReportSection = ({ title, content, icon }: { title: string, content: string | undefined, icon: React.ReactNode }) => {
+    if (!content) return null;
+    return (
+        <div>
+            <h3 className="font-headline text-2xl flex items-center gap-2 text-primary">
+                {icon} {title}
+            </h3>
+            <p className="mt-2 text-base text-foreground/90 whitespace-pre-wrap">
+                {content}
+            </p>
+        </div>
+    );
+  };
 
   return (
     <div className="space-y-8">
@@ -293,12 +320,20 @@ export function PalmReadingClient() {
       )}
 
       {result && (
-        <Card className="shadow-lg">
+        <Card className="shadow-lg" id="palm-report">
             <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> Your Comprehensive AI Analysis</CardTitle>
-            <CardDescription>Left hand shows potential, right hand shows action. See the full story below.</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> Your Comprehensive AI Analysis</CardTitle>
+                  <CardDescription>Left hand shows potential, right hand shows action. See the full story below.</CardDescription>
+                </div>
+                <Button onClick={handleDownload} variant="outline" size="icon">
+                    <Download className="h-4 w-4"/>
+                    <span className="sr-only">Download Report</span>
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-8">
+            <CardContent ref={reportRef} className="space-y-8 p-6">
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                     {result.leftHandAnalysis && <AnalysisDisplay analysis={result.leftHandAnalysis} handTitle="Left Hand (Potential)" previewUrl={leftPreviewUrl} />}
                     {result.rightHandAnalysis && <AnalysisDisplay analysis={result.rightHandAnalysis} handTitle="Right Hand (Action)" previewUrl={rightPreviewUrl} />}
