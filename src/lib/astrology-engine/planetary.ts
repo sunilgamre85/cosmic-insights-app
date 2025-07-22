@@ -1,5 +1,5 @@
 // planetary.ts
-import { getPlanetPositions } from './planet';
+import { getPlanetPositions } from './calculatePlanets';
 
 /**
  * Gets the tropical longitude of the Moon for a given Julian Day.
