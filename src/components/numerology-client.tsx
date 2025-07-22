@@ -18,8 +18,6 @@ import { CalendarIcon, Loader2, Gem, User, Star, Activity, Heart, Briefcase, Fea
 import { aiNumerologyAnalysis, type AiNumerologyAnalysisOutput } from "@/ai/flows/ai-numerology-analysis";
 import { Separator } from "./ui/separator";
 import { Badge } from "./ui/badge";
-import { ScrollArea } from "./ui/scroll-area";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useUserInput } from "@/context/UserInputContext";
 
 const formSchema = z.object({
@@ -81,49 +79,49 @@ export function NumerologyClient() {
       title: "Life Path Number",
       value: result.lifePathNumber.number,
       content: result.lifePathNumber.analysis,
-      icon: <Activity className="h-5 w-5 mr-2 text-primary"/>,
+      icon: <Activity className="h-5 w-5 text-primary"/>,
       id: "life-path"
     },
     {
       title: "Destiny Number",
       value: result.destinyNumber.number,
       content: result.destinyNumber.analysis,
-      icon: <Star className="h-5 w-5 mr-2 text-primary"/>,
+      icon: <Star className="h-5 w-5 text-primary"/>,
       id: "destiny"
     },
     {
       title: "Soul Urge Number",
       value: result.soulUrgeNumber.number,
       content: result.soulUrgeNumber.analysis,
-      icon: <Feather className="h-5 w-5 mr-2 text-primary"/>,
+      icon: <Feather className="h-5 w-5 text-primary"/>,
       id: "soul-urge"
     },
     {
       title: "Personality Number",
       value: result.personalityNumber.number,
       content: result.personalityNumber.analysis,
-      icon: <User className="h-5 w-5 mr-2 text-primary"/>,
+      icon: <User className="h-5 w-5 text-primary"/>,
       id: "personality"
     },
     {
         title: "Birth Day Number",
         value: result.birthDayNumber.number,
         content: result.birthDayNumber.analysis,
-        icon: <Gift className="h-5 w-5 mr-2 text-primary"/>,
+        icon: <Gift className="h-5 w-5 text-primary"/>,
         id: "birth-day"
     },
     {
         title: "Maturity Number",
         value: result.maturityNumber.number,
         content: result.maturityNumber.analysis,
-        icon: <Sun className="h-5 w-5 mr-2 text-primary"/>,
+        icon: <Sun className="h-5 w-5 text-primary"/>,
         id: "maturity"
     },
     {
         title: "Personal Year Number",
         value: result.personalYearNumber.number,
         content: result.personalYearNumber.analysis,
-        icon: <Moon className="h-5 w-5 mr-2 text-primary"/>,
+        icon: <Moon className="h-5 w-5 text-primary"/>,
         id: "personal-year"
     },
   ] : [];
@@ -215,42 +213,40 @@ export function NumerologyClient() {
       </Card>
 
       {isLoading && (
-        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+        <div className="flex flex-col items-center justify-center h-full text-muted-foreground pt-12">
           <Loader2 className="h-8 w-8 animate-spin mb-4" />
           <p>Calculating your cosmic blueprint...</p>
         </div>
       )}
 
       {result && (
-        <Card className="shadow-lg">
+        <Card className="shadow-lg w-full max-w-2xl mx-auto">
             <CardHeader>
                 <CardTitle className="font-headline">Your Numerology Report</CardTitle>
-                <CardDescription>Your personalized numerology insights will appear below.</CardDescription>
+                <CardDescription>Your personalized numerology insights appear below.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <div className="space-y-6">
+            <CardContent className="space-y-6">
                 
-                <Accordion type="single" collapsible defaultValue="life-path" className="w-full">
-                    {analysisItems.map(item => (
-                    <AccordionItem value={item.id} key={item.id}>
-                        <AccordionTrigger className="font-headline text-lg hover:no-underline">
-                        <div className="flex items-center">
-                            {item.icon}
-                            <span className="flex-1">{item.title}</span>
-                            <Badge className="text-xl mr-4">{item.value}</Badge>
+                {analysisItems.map((item, index) => (
+                    <div key={item.id}>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-headline text-xl flex items-center gap-2">
+                                {item.icon}
+                                {item.title}
+                            </h3>
+                            <Badge className="text-xl">{item.value}</Badge>
                         </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="text-base whitespace-pre-wrap">
-                        {item.content}
-                        </AccordionContent>
-                    </AccordionItem>
-                    ))}
-                </Accordion>
+                        <p className="mt-2 text-base text-foreground/90 whitespace-pre-wrap pl-7">
+                            {item.content}
+                        </p>
+                        {index < analysisItems.length - 1 && <Separator className="mt-6" />}
+                    </div>
+                ))}
                 
                 <Separator />
 
                 <Card className="bg-secondary">
-                    <CardHeader>
+                    <CardHeader className="pb-4">
                         <CardTitle className="font-headline text-xl flex items-center gap-2"><Diamond className="h-5 w-5 text-primary"/> Lucky Elements</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-4">
@@ -260,41 +256,37 @@ export function NumerologyClient() {
                         <div><span className="font-semibold">Gemstone:</span> <Badge variant="outline" className="text-lg ml-1 bg-background">{result.luckyElements.luckyGemstone}</Badge></div>
                     </CardContent>
                 </Card>
+                 <Separator />
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-xl flex items-center gap-2"><BookOpen className="h-5 w-5 text-primary"/> Overall Analysis</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-base whitespace-pre-wrap">
+                <div>
+                    <h3 className="font-headline text-xl flex items-center gap-2 mb-2"><BookOpen className="h-5 w-5 text-primary"/> Overall Analysis</h3>
+                    <p className="text-base text-foreground/90 whitespace-pre-wrap">
                         {result.overallAnalysis}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-xl flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary"/> Career Suggestions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-base whitespace-pre-wrap">
-                        {result.careerSuggestions}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-xl flex items-center gap-2"><Heart className="h-5 w-5 text-primary"/> Relationship Compatibility</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-base whitespace-pre-wrap">
-                        {result.relationshipCompatibility}
-                    </CardContent>
-                </Card>
-
+                    </p>
                 </div>
+                 <Separator />
+
+                <div>
+                    <h3 className="font-headline text-xl flex items-center gap-2 mb-2"><Briefcase className="h-5 w-5 text-primary"/> Career Suggestions</h3>
+                    <p className="text-base text-foreground/90 whitespace-pre-wrap">
+                        {result.careerSuggestions}
+                    </p>
+                </div>
+                 <Separator />
+
+                <div>
+                    <h3 className="font-headline text-xl flex items-center gap-2 mb-2"><Heart className="h-5 w-5 text-primary"/> Relationship Compatibility</h3>
+                    <p className="text-base text-foreground/90 whitespace-pre-wrap">
+                        {result.relationshipCompatibility}
+                    </p>
+                </div>
+
             </CardContent>
         </Card>
       )}
 
       {!isLoading && !result && (
-        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center text-muted-foreground">
+        <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center text-muted-foreground">
           <Gem className="h-12 w-12 mb-4" />
           <p>Your numbers hold the key.</p>
           <p className="text-sm">Enter your details to generate your report.</p>
