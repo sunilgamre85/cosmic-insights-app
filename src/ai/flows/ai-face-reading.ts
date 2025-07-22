@@ -21,15 +21,23 @@ const AnalyzeFaceInputSchema = z.object({
 });
 export type AnalyzeFaceInput = z.infer<typeof AnalyzeFaceInputSchema>;
 
+const TraitAnalysisSchema = z.object({
+    observation: z.string().describe("Describe what you actually see (don’t assume or generalize)."),
+    interpretation: z.string().describe("Based on Samudrik Shastra and modern psychology, interpret what it may say about the person’s personality, tendencies, or future."),
+});
+
 const AnalyzeFaceOutputSchema = z.object({
-  forehead: z.string().describe("Analysis of the forehead shape and what it suggests about intelligence and thinking style."),
-  eyebrows: z.string().describe("Analysis of the eyebrows (shape, thickness, arch) and their relation to temperament and logic."),
-  eyes: z.string().describe("Analysis of the eyes (size, shape, spacing) and what they reveal about personality and perception."),
-  nose: z.string().describe("Analysis of the nose shape and its connection to career, wealth, and ambition."),
-  cheeks: z.string().describe("Analysis of the cheekbones and their indication of influence and authority."),
-  lips: z.string().describe("Analysis of the lip shape and its link to communication style and generosity."),
-  chin: z.string().describe("Analysis of the chin and jaw, and what it says about willpower and determination."),
-  overallAnalysis: z.string().describe("A summary that synthesizes all facial features into a holistic personality reading."),
+  facialStructure: TraitAnalysisSchema,
+  forehead: TraitAnalysisSchema,
+  eyebrows: TraitAnalysisSchema,
+  eyes: TraitAnalysisSchema,
+  nose: TraitAnalysisSchema,
+  lips: TraitAnalysisSchema,
+  chin: TraitAnalysisSchema,
+  cheeks: TraitAnalysisSchema,
+  jawline: TraitAnalysisSchema,
+  ears: TraitAnalysisSchema,
+  facialExpression: TraitAnalysisSchema,
 });
 export type AnalyzeFaceOutput = z.infer<typeof AnalyzeFaceOutputSchema>;
 
@@ -44,28 +52,33 @@ const prompt = ai.definePrompt({
   config: {
     temperature: 0.7,
   },
-  prompt: `You are an expert physiognomist (face reader). Your task is to analyze the provided photo of a person's face and generate a unique, specific, and insightful analysis based ONLY on the visual features in that image.
+  prompt: `You are a master physiognomist with deep knowledge of Indian face reading traditions (Samudrik Shastra) and modern facial analysis. You will receive a human face image. Based on this image, extract the following:
 
-**CRITICAL INSTRUCTIONS:**
-1.  **NO GENERIC PHRASES:** You are strictly forbidden from using vague, generic, or templated phrases like "medium size," "balanced shape," "well-defined," "normal," or similar non-descriptive terms. Your response MUST be unique and directly tied to the visual information in the photo.
-2.  **DESCRIBE AND INTERPRET:** For each feature, first describe the specific visual characteristic you observe (e.g., "a wide forehead," "thin, highly-arched eyebrows," "a rounded chin") and THEN provide the corresponding physiognomic interpretation.
-3.  **LANGUAGE:** You MUST provide the entire analysis in the following language: {{{language}}}.
+1.  **Facial Structure** (face shape - round, oval, square, long, heart-shaped, etc.)
+2.  **Forehead** (height, width, curve, lines, any moles/marks)
+3.  **Eyebrows** (shape, length, thickness, distance between)
+4.  **Eyes** (size, shape, tilt, spacing, eyelids)
+5.  **Nose** (bridge, length, nostrils, sharpness, tip)
+6.  **Lips** (size, curvature, upper/lower proportion)
+7.  **Chin** (round, pointed, dimpled, broad, projecting)
+8.  **Cheeks** (full, sunken, high cheekbones)
+9.  **Jawline** (sharp, soft, wide, angular)
+10. **Ears** (size, lobe type, angle)
+11. **Facial Expression** (neutral, smile, tight lips, eye focus)
 
-**PHOTO FOR ANALYSIS:**
+👉 For each trait, do the following:
+
+-   **Observation**: Describe what you actually see (don’t assume or generalize).
+-   **Interpretation**: Based on Samudrik Shastra and modern facial psychology, interpret what it may say about the person’s personality, tendencies, or future.
+-   **Avoid vague words** like "medium", "normal", "balanced" unless it's comparative.
+-   **Respond in the requested language**: {{{language}}}
+-   **Respond in the required JSON format.**
+
+The tone should be insightful, warm, and intelligent — not robotic or horoscope-like.
+
+PHOTO FOR ANALYSIS:
 {{media url=photoDataUri}}
-
-**ANALYSIS TASK:**
-Provide a detailed analysis for each of the following facial features based on what you specifically see in the photo. Be insightful, positive, and encouraging. Your analysis for each feature must be tailored to THIS image.
-
--   **Forehead:** (e.g., Is it wide, narrow, high, or short? What does this specific shape imply?)
--   **Eyebrows:** (e.g., Are they thick, thin, straight, arched, or close-set? What do these specific traits reveal?)
--   **Eyes:** (e.g., Are they large, small, almond-shaped, round, deep-set? What does their appearance suggest?)
--   **Nose:** (e.g., Describe its bridge, tip, and width. What does this structure indicate?)
--   **Cheeks:** (e.g., Are the cheekbones high and prominent, or are the cheeks fuller? What does this signify?)
--   **Lips:** (e.g., Describe the fullness of the upper and lower lips. What does this reveal about communication style?)
--   **Chin:** (e.g., Is it pointed, square, round, or prominent? What does this say about willpower?)
-
-Finally, provide an **Overall Analysis** that combines these individual, specific analyses into a cohesive and insightful personality profile. Return the full analysis in the requested JSON format.`,
+`,
 });
 
 const analyzeFaceFlow = ai.defineFlow(
