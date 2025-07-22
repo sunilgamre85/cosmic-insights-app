@@ -32,6 +32,9 @@ const prompt = ai.definePrompt({
   name: 'janamKundliAnalysisPrompt',
   input: {schema: JanamKundliAnalysisInputSchema},
   output: {schema: JanamKundliAnalysisOutputSchema},
+  config: {
+    temperature: 0,
+  },
   prompt: `You are an expert Vedic astrologer. Generate a detailed Janam Kundli (birth chart) report based on the provided details.
 
 Name: {{{name}}}

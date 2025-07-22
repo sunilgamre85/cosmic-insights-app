@@ -38,6 +38,9 @@ const prompt = ai.definePrompt({
   name: 'kundliMatchingAnalysisPrompt',
   input: {schema: KundliMatchingAnalysisInputSchema},
   output: {schema: KundliMatchingAnalysisOutputSchema},
+  config: {
+    temperature: 0,
+  },
   prompt: `You are an expert Vedic astrologer specializing in Kundli Matching (Ashtakoot Milan) for marriage compatibility.
 
 Analyze the birth details of the two individuals provided below.

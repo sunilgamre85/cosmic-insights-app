@@ -38,6 +38,9 @@ const prompt = ai.definePrompt({
   name: 'analyzePalmPrompt',
   input: {schema: AnalyzePalmInputSchema},
   output: {schema: AnalyzePalmOutputSchema},
+  config: {
+    temperature: 0,
+  },
   prompt: `You are an expert palm reader. Analyze the user's palm and provide insights based on the palm lines.
 
 Use the following as the source of information about the palm.
