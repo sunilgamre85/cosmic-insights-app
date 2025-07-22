@@ -14,11 +14,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, Loader2, Gem, User, Star, Activity, Heart, Briefcase, Feather, Sun, Moon, Diamond, Gift } from "lucide-react";
+import { CalendarIcon, Loader2, Gem, User, Star, Activity, Heart, Briefcase, Feather, Sun, Moon, Diamond, Gift, BookOpen } from "lucide-react";
 import { aiNumerologyAnalysis, type AiNumerologyAnalysisOutput } from "@/ai/flows/ai-numerology-analysis";
 import { Separator } from "./ui/separator";
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const formSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
@@ -57,21 +58,57 @@ export function NumerologyClient() {
     }
   }
 
-  const NumberCard = ({ title, value, icon }: { title: string, value: number, icon: React.ReactNode }) => (
-    <div className="p-4 rounded-lg bg-secondary flex flex-col items-center justify-center text-center h-full">
-      {icon}
-      <h3 className="font-headline text-md mt-2">{title}</h3>
-      <p className="text-3xl font-bold text-primary">{value}</p>
-    </div>
-  );
-  
-  const InfoCard = ({ title, content, icon }: { title: string, content: string | React.ReactNode, icon: React.ReactNode }) => (
-    <div className="p-4 rounded-lg bg-secondary">
-      <h3 className="font-headline text-lg mb-2 flex items-center gap-2">{icon} {title}</h3>
-      <div className="text-base text-foreground/90 whitespace-pre-wrap">{content}</div>
-    </div>
-  );
-
+  const analysisItems = result ? [
+    {
+      title: "Life Path Number",
+      value: result.lifePathNumber.number,
+      content: result.lifePathNumber.analysis,
+      icon: <Activity className="h-5 w-5 mr-2 text-primary"/>,
+      id: "life-path"
+    },
+    {
+      title: "Destiny Number",
+      value: result.destinyNumber.number,
+      content: result.destinyNumber.analysis,
+      icon: <Star className="h-5 w-5 mr-2 text-primary"/>,
+      id: "destiny"
+    },
+    {
+      title: "Soul Urge Number",
+      value: result.soulUrgeNumber.number,
+      content: result.soulUrgeNumber.analysis,
+      icon: <Feather className="h-5 w-5 mr-2 text-primary"/>,
+      id: "soul-urge"
+    },
+    {
+      title: "Personality Number",
+      value: result.personalityNumber.number,
+      content: result.personalityNumber.analysis,
+      icon: <User className="h-5 w-5 mr-2 text-primary"/>,
+      id: "personality"
+    },
+    {
+        title: "Birth Day Number",
+        value: result.birthDayNumber.number,
+        content: result.birthDayNumber.analysis,
+        icon: <Gift className="h-5 w-5 mr-2 text-primary"/>,
+        id: "birth-day"
+    },
+    {
+        title: "Maturity Number",
+        value: result.maturityNumber.number,
+        content: result.maturityNumber.analysis,
+        icon: <Sun className="h-5 w-5 mr-2 text-primary"/>,
+        id: "maturity"
+    },
+    {
+        title: "Personal Year Number",
+        value: result.personalYearNumber.number,
+        content: result.personalYearNumber.analysis,
+        icon: <Moon className="h-5 w-5 mr-2 text-primary"/>,
+        id: "personal-year"
+    },
+  ] : [];
 
   return (
     <div className="grid lg:grid-cols-5 gap-8">
@@ -178,29 +215,64 @@ export function NumerologyClient() {
           {result && (
             <ScrollArea className="h-[calc(100vh-300px)] w-full pr-4">
             <div className="space-y-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <NumberCard title="Life Path" value={result.lifePathNumber} icon={<Activity className="h-6 w-6 text-primary"/>} />
-                  <NumberCard title="Destiny" value={result.destinyNumber} icon={<Star className="h-6 w-6 text-primary"/>} />
-                  <NumberCard title="Soul Urge" value={result.soulUrgeNumber} icon={<Feather className="h-6 w-6 text-primary"/>} />
-                  <NumberCard title="Personality" value={result.personalityNumber} icon={<User className="h-6 w-6 text-primary"/>} />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <NumberCard title="Birth Day" value={result.birthDayNumber} icon={<Gift className="h-6 w-6 text-primary"/>} />
-                  <NumberCard title="Maturity" value={result.maturityNumber} icon={<Sun className="h-6 w-6 text-primary"/>} />
-                  <NumberCard title="Personal Year" value={result.personalYearNumber} icon={<Moon className="h-6 w-6 text-primary"/>} />
-              </div>
+              
+              <Accordion type="single" collapsible defaultValue="life-path" className="w-full">
+                {analysisItems.map(item => (
+                  <AccordionItem value={item.id} key={item.id}>
+                    <AccordionTrigger className="font-headline text-lg hover:no-underline">
+                      <div className="flex items-center">
+                          {item.icon}
+                          <span className="flex-1">{item.title}</span>
+                          <Badge className="text-xl mr-4">{item.value}</Badge>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="text-base whitespace-pre-wrap">
+                      {item.content}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+              
               <Separator />
-              <InfoCard title="Lucky Elements" icon={<Diamond className="h-5 w-5 text-primary"/>} content={
-                  <div className="flex flex-wrap items-center gap-4">
-                      <div><span className="font-semibold">Numbers:</span> {result.luckyNumbers.map(n => <Badge key={n} variant="secondary" className="text-lg ml-1">{n}</Badge>)}</div>
-                      <div><span className="font-semibold">Color:</span> <Badge style={{backgroundColor: result.luckyColor.toLowerCase()}} className="text-lg ml-1 text-white">{result.luckyColor}</Badge></div>
-                      <div><span className="font-semibold">Day:</span> <Badge variant="secondary" className="text-lg ml-1">{result.luckyDay}</Badge></div>
-                      <div><span className="font-semibold">Gemstone:</span> <Badge variant="secondary" className="text-lg ml-1">{result.luckyGemstone}</Badge></div>
-                  </div>
-              } />
-              <InfoCard title="Detailed Analysis" icon={<User className="h-5 w-5 text-primary"/>} content={result.detailedAnalysis} />
-              <InfoCard title="Career Suggestions" icon={<Briefcase className="h-5 w-5 text-primary"/>} content={result.careerSuggestions} />
-              <InfoCard title="Relationship Compatibility" icon={<Heart className="h-5 w-5 text-primary"/>} content={result.relationshipCompatibility} />
+
+              <Card className="bg-secondary">
+                  <CardHeader>
+                      <CardTitle className="font-headline text-xl flex items-center gap-2"><Diamond className="h-5 w-5 text-primary"/> Lucky Elements</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-4">
+                      <div><span className="font-semibold">Numbers:</span> {result.luckyElements.luckyNumbers.map(n => <Badge key={n} variant="outline" className="text-lg ml-1 bg-background">{n}</Badge>)}</div>
+                      <div><span className="font-semibold">Color:</span> <Badge style={{backgroundColor: result.luckyElements.luckyColor.toLowerCase()}} className="text-lg ml-1 text-white">{result.luckyElements.luckyColor}</Badge></div>
+                      <div><span className="font-semibold">Day:</span> <Badge variant="outline" className="text-lg ml-1 bg-background">{result.luckyElements.luckyDay}</Badge></div>
+                      <div><span className="font-semibold">Gemstone:</span> <Badge variant="outline" className="text-lg ml-1 bg-background">{result.luckyElements.luckyGemstone}</Badge></div>
+                  </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline text-xl flex items-center gap-2"><BookOpen className="h-5 w-5 text-primary"/> Overall Analysis</CardTitle>
+                </CardHeader>
+                <CardContent className="text-base whitespace-pre-wrap">
+                    {result.overallAnalysis}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline text-xl flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary"/> Career Suggestions</CardTitle>
+                </CardHeader>
+                <CardContent className="text-base whitespace-pre-wrap">
+                    {result.careerSuggestions}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline text-xl flex items-center gap-2"><Heart className="h-5 w-5 text-primary"/> Relationship Compatibility</CardTitle>
+                </CardHeader>
+                <CardContent className="text-base whitespace-pre-wrap">
+                    {result.relationshipCompatibility}
+                </CardContent>
+              </Card>
 
             </div>
             </ScrollArea>
