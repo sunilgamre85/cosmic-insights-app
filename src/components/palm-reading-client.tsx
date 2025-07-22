@@ -170,74 +170,78 @@ export function PalmReadingClient() {
     ] : [];
 
     return (
-        <div className="space-y-4">
-            <h3 className="font-headline text-2xl text-center">{handTitle}</h3>
-            {previewUrl && (
-                <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
-                    <Image src={previewUrl} alt={`${handTitle} palm analysis`} layout="fill" objectFit="contain" />
-                    <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        {lineDetails.map(line => line.data && line.data.path && (
-                            <path
-                                key={line.key}
-                                d={svgPath(line.data.path)}
-                                className={cn('fill-none transition-all duration-200',
-                                    highlightedLine === line.key
-                                    ? highlightedLineColors[line.key as keyof typeof highlightedLineColors]
-                                    : lineColors[line.key as keyof typeof lineColors]
-                                )}
-                                strokeWidth={highlightedLine === line.key ? 3 : 1.5}
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            />
-                        ))}
-                    </svg>
-                </div>
-            )}
-            {lineDetails.length > 0 ? lineDetails.map((detail) => detail.data && (
-                <div 
-                    key={detail.key}
-                    onMouseEnter={() => setHighlightedLine(detail.key)}
-                    onMouseLeave={() => setHighlightedLine(null)}
-                    className="cursor-pointer p-2 rounded-md hover:bg-secondary"
-                >
-                    <h4 className={`font-headline text-lg flex items-center gap-2 ${lineTextColors[detail.key as keyof typeof lineTextColors]}`}>
-                        {React.cloneElement(detail.icon, { className: `h-5 w-5 ${lineTextColors[detail.key as keyof typeof lineTextColors]}` })} 
-                        {detail.title}
+        <Card className="flex-1">
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl text-center">{handTitle}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {previewUrl && (
+                    <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
+                        <Image src={previewUrl} alt={`${handTitle} palm analysis`} layout="fill" objectFit="contain" />
+                        <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            {lineDetails.map(line => line.data && line.data.path && (
+                                <path
+                                    key={line.key}
+                                    d={svgPath(line.data.path)}
+                                    className={cn('fill-none transition-all duration-200',
+                                        highlightedLine === line.key
+                                        ? highlightedLineColors[line.key as keyof typeof highlightedLineColors]
+                                        : lineColors[line.key as keyof typeof lineColors]
+                                    )}
+                                    strokeWidth={highlightedLine === line.key ? 3 : 1.5}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            ))}
+                        </svg>
+                    </div>
+                )}
+                {lineDetails.length > 0 ? lineDetails.map((detail) => detail.data && (
+                    <div 
+                        key={detail.key}
+                        onMouseEnter={() => setHighlightedLine(detail.key)}
+                        onMouseLeave={() => setHighlightedLine(null)}
+                        className="cursor-pointer p-2 rounded-md hover:bg-secondary"
+                    >
+                        <h4 className={`font-headline text-lg flex items-center gap-2 ${lineTextColors[detail.key as keyof typeof lineTextColors]}`}>
+                            {React.cloneElement(detail.icon, { className: `h-5 w-5 ${lineTextColors[detail.key as keyof typeof lineTextColors]}` })} 
+                            {detail.title}
+                        </h4>
+                        <p className="mt-1 text-sm text-foreground/90 pl-7">{detail.data.analysis}</p>
+                    </div>
+                )) : (
+                    <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Analysis Incomplete</AlertTitle>
+                        <AlertDescription>
+                            The AI was unable to identify the standard palm lines in this image.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                
+                {analysis.generalAnalysis && (
+                    <div className="p-2 rounded-md hover:bg-secondary">
+                    <h4 className="font-headline text-lg flex items-center gap-2 text-primary">
+                        <Shapes className="h-5 w-5" /> General Palm Features
                     </h4>
-                    <p className="mt-1 text-sm text-foreground/90 pl-7">{detail.data.analysis}</p>
-                </div>
-            )) : (
-                <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Analysis Incomplete</AlertTitle>
-                    <AlertDescription>
-                        The AI was unable to identify the standard palm lines in this image.
-                    </AlertDescription>
-                </Alert>
-            )}
-            
-            {analysis.generalAnalysis && (
-                <div className="p-2 rounded-md hover:bg-secondary">
-                <h4 className="font-headline text-lg flex items-center gap-2 text-primary">
-                    <Shapes className="h-5 w-5" /> General Palm Features
-                </h4>
-                <div className="space-y-2 mt-2 pl-7">
-                    {analysis.generalAnalysis.handShape && (
-                        <div>
-                        <h5 className="font-semibold text-sm">Hand Shape</h5>
-                        <p className="text-sm text-foreground/90">{analysis.generalAnalysis.handShape}</p>
-                        </div>
-                    )}
-                    {analysis.generalAnalysis.mounts && (
-                        <div>
-                        <h5 className="font-semibold text-sm">Mounts Analysis</h5>
-                        <p className="text-sm text-foreground/90">{analysis.generalAnalysis.mounts}</p>
-                        </div>
-                    )}
-                </div>
-                </div>
-            )}
-        </div>
+                    <div className="space-y-2 mt-2 pl-7">
+                        {analysis.generalAnalysis.handShape && (
+                            <div>
+                            <h5 className="font-semibold text-sm">Hand Shape</h5>
+                            <p className="text-sm text-foreground/90">{analysis.generalAnalysis.handShape}</p>
+                            </div>
+                        )}
+                        {analysis.generalAnalysis.mounts && (
+                            <div>
+                            <h5 className="font-semibold text-sm">Mounts Analysis</h5>
+                            <p className="text-sm text-foreground/90">{analysis.generalAnalysis.mounts}</p>
+                            </div>
+                        )}
+                    </div>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
   }
 
@@ -285,8 +289,9 @@ export function PalmReadingClient() {
             <CardDescription>Left hand shows potential, right hand shows action. See the full story below.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
-                <div className="grid md:grid-cols-2 gap-8 items-start">
+                <div className="flex flex-col md:flex-row gap-8 items-start">
                     {result.leftHandAnalysis && <AnalysisDisplay analysis={result.leftHandAnalysis} handTitle="Left Hand (Potential)" previewUrl={leftPreviewUrl} />}
+                    <Separator orientation="vertical" className="hidden md:block h-auto"/>
                     {result.rightHandAnalysis && <AnalysisDisplay analysis={result.rightHandAnalysis} handTitle="Right Hand (Action)" previewUrl={rightPreviewUrl} />}
                 </div>
 

@@ -41,9 +41,9 @@ const GeneralAnalysisSchema = z.object({
 });
 
 const SinglePalmAnalysisSchema = z.object({
-  lifeLine: LineSchema.describe('Analysis and path of the life line.'),
-  heartLine: LineSchema.describe('Analysis and path of the heart line.'),
-  headline: LineSchema.describe('Analysis and path of the head line.'),
+  lifeLine: LineSchema.optional().describe('Analysis and path of the life line.'),
+  heartLine: LineSchema.optional().describe('Analysis and path of the heart line.'),
+  headline: LineSchema.optional().describe('Analysis and path of the head line.'),
   fateLine: LineSchema.optional().describe('Analysis and path of the fate line (if visible).'),
   sunLine: LineSchema.optional().describe('Analysis and path of the sun line, also known as the Apollo line (if visible).'),
   generalAnalysis: GeneralAnalysisSchema.optional().describe('General analysis of other important palm features.'),
