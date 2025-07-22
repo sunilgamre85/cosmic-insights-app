@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, Loader2, Star } from "lucide-react";
+import { CalendarIcon, Loader2, Star, Shield, Sun } from "lucide-react";
 import { janamKundliAnalysis, type JanamKundliAnalysisOutput } from "@/ai/flows/janam-kundli-analysis";
 import { ScrollArea } from "./ui/scroll-area";
 import { useUserInput } from "@/context/UserInputContext";
@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Separator } from "./ui/separator";
 import { LagnaChart } from "./lagna-chart";
+import { Badge } from "./ui/badge";
 
 const formSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
@@ -48,7 +49,7 @@ export function JanamKundliClient() {
       dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
       hourOfBirth: "12",
       minuteOfBirth: "00",
-      placeOfBirth: "London, UK",
+      placeOfBirth: "Delhi, India",
     },
   });
 
@@ -58,7 +59,7 @@ export function JanamKundliClient() {
       dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
       hourOfBirth: form.getValues("hourOfBirth") || "12",
       minuteOfBirth: form.getValues("minuteOfBirth") || "00",
-      placeOfBirth: form.getValues("placeOfBirth") || "London, UK",
+      placeOfBirth: form.getValues("placeOfBirth") || "Delhi, India",
     });
   }, [userDetails, form]);
 
@@ -81,7 +82,7 @@ export function JanamKundliClient() {
       console.error("Analysis failed:", error);
       toast({
         title: "Analysis Failed",
-        description: "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please check your API configuration and try again.",
         variant: "destructive",
       });
     } finally {
@@ -211,7 +212,7 @@ export function JanamKundliClient() {
                   <FormItem>
                     <FormLabel>Place of Birth</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. London, UK" {...field} />
+                      <Input placeholder="e.g. Delhi, India" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -262,8 +263,19 @@ export function JanamKundliClient() {
                         </div>
                     )}
                     <Separator />
+                     {result.yogasAndDoshas && result.yogasAndDoshas.length > 0 && (
+                        <div>
+                            <h3 className="font-headline text-xl mb-2 flex items-center gap-2"><Shield className="h-5 w-5 text-primary"/> Key Yogas & Doshas</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {result.yogasAndDoshas.map((yoga) => (
+                                    <Badge key={yoga.name} variant="secondary" className="text-sm">{yoga.name}</Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    <Separator />
                     <div>
-                        <h3 className="font-headline text-xl mb-2">AI Generated Analysis</h3>
+                        <h3 className="font-headline text-xl mb-2 flex items-center gap-2"><Sun className="h-5 w-5 text-primary"/> AI Generated Analysis</h3>
                         <div
                             className="prose dark:prose-invert max-w-none text-base text-foreground/90 whitespace-pre-wrap p-4 border rounded-lg bg-secondary/30"
                         >{result.report}</div>
@@ -294,7 +306,4 @@ export function JanamKundliClient() {
             </ScrollArea>
           )}
         </CardContent>
-      </Card>
-    </div>
-  );
-}
+      </Card

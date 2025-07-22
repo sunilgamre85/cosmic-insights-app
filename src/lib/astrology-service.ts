@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview A service for performing astrological calculations.
- * This file will house the logic for generating Kundli charts, either via an external API or a library.
+ * This file will house the logic for generating Kundli charts by calling a self-hosted sweph-api.
  */
 
 // --- Interfaces for Kundli Data ---
@@ -20,10 +20,17 @@ export interface Mahadasha {
     endDate: string;
 }
 
+export interface YogaData {
+    name: string;
+    description: string;
+}
+
 interface KundliInput {
     date: Date;
+    timeOfBirth: string;
     lat: number;
     lon: number;
+    timezoneOffset?: number;
 }
 
 // --- Hardcoded Data (for fallback/placeholder use) ---
@@ -33,98 +40,54 @@ const ZODIAC_SIGNS = [
     'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
 ];
 
-/**
- * Calculates the core Kundli data (planetary positions and ascendant).
- *
- * NOTE: This is a placeholder implementation. In a real application, this function
- * would call an external astrology API or use a dedicated library with the
- * provided birth date, latitude, and longitude to get accurate data.
- */
-export async function getKundliData({ date, lat, lon }: KundliInput): Promise<{ascendant: {degree: number, sign: string}, planets: PlanetData[], houseSigns: string[]}> {
-  console.log('Fetching Kundli data for:', { date, lat, lon });
-  // This is where you would call the external API or calculation library.
-  // Returning hardcoded sample data for now.
-  return {
-    ascendant: { degree: 124.5, sign: 'Leo' },
-    planets: [
-      { name: 'Sun', degree: 135.2, sign: 'Leo', house: 1 },
-      { name: 'Moon', degree: 310.8, sign: 'Aquarius', house: 7 },
-      { name: 'Mars', degree: 95.1, sign: 'Cancer', house: 12 },
-      { name: 'Mercury', degree: 155.6, sign: 'Virgo', house: 2 },
-      { name: 'Jupiter', degree: 25.4, sign: 'Aries', house: 9 },
-      { name: 'Venus', degree: 110.3, sign: 'Cancer', house: 12 },
-      { name: 'Saturn', degree: 340.9, sign: 'Pisces', house: 8 },
-      { name: 'Rahu', degree: 178.0, sign: 'Virgo', house: 2 },
-      { name: 'Ketu', degree: 358.0, sign: 'Pisces', house: 8 },
-    ],
-    houseSigns: ZODIAC_SIGNS,
-  };
+
+async function getLatLon(place: string): Promise<{ lat: number, lng: number }> {
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+        console.warn("Google Maps API key not found. Using default coordinates.");
+        // Return default coordinates for Mumbai
+        return { lat: 19.0760, lng: 72.8777 };
+    }
+    const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(place)}&key=${apiKey}`);
+    const data = await res.json();
+    if (data.status !== 'OK' || !data.results[0]) {
+        throw new Error(`Geocoding failed for place: ${place}. Status: ${data.status}`);
+    }
+    return data.results[0].geometry.location;
 };
 
 
 /**
- * Calculates astrological doshas and yogas based on planet positions.
- * NOTE: This is a placeholder. A real implementation would have more complex logic.
+ * Calculates the core Kundli data by calling the self-hosted sweph-api.
  */
-export async function getVedicYogasAndDoshas(planets: PlanetData[], ascendantSign: string): Promise<{ name: string; description: string }[]> {
-    const results: { name: string; description: string }[] = [];
-    const getPlanet = (name: string) => planets.find(p => p.name === name);
+export async function getKundliData({ date, timeOfBirth, placeOfBirth }: { date: Date, timeOfBirth: string, placeOfBirth: string }): Promise<{ascendant: {degree: number, sign: string}, planets: PlanetData[], houseSigns: string[], yogasAndDoshas: YogaData[], mahadashas: Mahadasha[]}> {
+  console.log('Fetching Kundli data for:', { date, timeOfBirth, placeOfBirth });
+  
+  const location = await getLatLon(placeOfBirth);
 
-    // Simple Mangal Dosha check
-    const mars = getPlanet('Mars');
-    if (mars && [1, 4, 7, 8, 12].includes(mars.house)) {
-        results.push({
-            name: "Mangal Dosha",
-            description: `Present because Mars is in the ${mars.house}th house from the Ascendant.`
-        });
-    }
+  const SWEPH_API_URL = process.env.SWEPH_API_URL;
+  if(!SWEPH_API_URL) {
+      throw new Error("SWEPH_API_URL is not configured in .env file.");
+  }
+  
+  // The API likely needs dob in YYYY-MM-DD format
+  const dob = date.toISOString().split('T')[0];
 
-    // Simple Gaj Kesari Yoga check
-    const jupiter = getPlanet('Jupiter');
-    const moon = getPlanet('Moon');
-    if (jupiter && moon) {
-        const relativeHouse = (jupiter.house - moon.house + 12) % 12;
-        if ([0, 3, 6, 9].includes(relativeHouse)) {
-             results.push({
-                name: "Gaj Kesari Yoga",
-                description: `Present because Jupiter is in a Kendra (1, 4, 7, 10) from the Moon.`
-            });
-        }
-    }
-    
-    return results;
-};
+  const res = await fetch(`${SWEPH_API_URL}/api/kundli`, {
+    method: 'POST',
+    body: JSON.stringify({
+      dob, 
+      tob: timeOfBirth,
+      lat: location.lat,
+      lon: location.lng,
+      timezoneOffset: +5.5 // Assuming Indian Standard Time for now. This should ideally be calculated.
+    }),
+    headers: { 'Content-Type': 'application/json' }
+  });
 
-/**
- * Calculates the Vimshottari Dasha periods.
- * NOTE: This is a placeholder. A real implementation would require complex calculations
- * based on the Moon's precise nakshatra position at birth.
- */
-export async function getVimshottariDasha(moonDegree: number, birthDate: Date): Promise<Mahadasha[]> {
-    // This is a highly simplified placeholder.
-    // A real calculation is much more complex.
-    const dashaLords = ['Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury', 'Ketu', 'Venus'];
-    const dashaDurations = [6, 10, 7, 18, 16, 19, 17, 7, 20];
-    
-    const dashaPeriods: Mahadasha[] = [];
-    let currentDate = new Date(birthDate);
+  if (!res.ok) {
+      const errorBody = await res.text();
+      throw new Error(`Failed to fetch from sweph-api: ${res.status} ${errorBody}`);
+  }
 
-    for (let i = 0; i < dashaLords.length; i++) {
-        const lord = dashaLords[i];
-        const duration = dashaDurations[i];
-        
-        const startDate = new Date(currentDate);
-        const endDate = new Date(startDate);
-        endDate.setFullYear(endDate.getFullYear() + duration);
-
-        dashaPeriods.push({
-            dashaLord: lord,
-            startDate: startDate.toISOString().split('T')[0],
-            endDate: endDate.toISOString().split('T')[0]
-        });
-        
-        currentDate = new Date(endDate);
-    }
-
-    return dashaPeriods.slice(0, 12);
-};
+  const data = await res.json

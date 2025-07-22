@@ -9,7 +9,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import { getKundliData, getVedicYogasAndDoshas, getVimshottariDasha, type PlanetData, type Mahadasha } from '@/lib/astrology-service';
+import { getKundliData, type Mahadasha } from '@/lib/astrology-service';
 import {z} from 'genkit';
 
 const JanamKundliAnalysisInputSchema = z.object({
@@ -17,8 +17,6 @@ const JanamKundliAnalysisInputSchema = z.object({
   dateOfBirth: z.string().describe('The date of birth of the person (YYYY-MM-DD).'),
   timeOfBirth: z.string().describe('The time of birth of the person (HH:MM).'),
   placeOfBirth: z.string().describe('The place of birth of the person (e.g., city, region, country).'),
-  lat: z.number().optional().describe('Latitude of the place of birth.'),
-  lon: z.number().optional().describe('Longitude of the place of birth.'),
 });
 export type JanamKundliAnalysisInput = z.infer<typeof JanamKundliAnalysisInputSchema>;
 
@@ -38,6 +36,10 @@ const JanamKundliAnalysisOutputSchema = z.object({
         startDate: z.string(),
         endDate: z.string(),
     })).describe('The calculated Vimshottari Mahadasha periods.'),
+    yogasAndDoshas: z.array(z.object({
+        name: z.string(),
+        description: z.string(),
+    })).describe('A list of important Yogas and Doshas found in the chart.'),
     chartData: ChartDataSchema.optional().describe('The data required to render the visual birth chart.'),
 });
 export type JanamKundliAnalysisOutput = z.infer<typeof JanamKundliAnalysisOutputSchema>;
@@ -100,29 +102,21 @@ const janamKundliAnalysisFlow = ai.defineFlow(
     outputSchema: JanamKundliAnalysisOutputSchema,
   },
   async (input): Promise<JanamKundliAnalysisOutput> => {
-    // In a real app, you would use a geocoding service to get lat/lon from placeOfBirth
-    // For this prototype, we'll use a fixed lat/lon if not provided.
-    const lat = input.lat ?? 19.2288; // Default to Mumbai, IN
-    const lon = input.lon ?? 72.8540; // Default to Mumbai, IN
-
+    
     const [year, month, day] = input.dateOfBirth.split('-').map(Number);
     const [hour, minute] = input.timeOfBirth.split(':').map(Number);
     
-    const birthDateObj = new Date(year, month - 1, day, hour, minute);
+    const birthDateObj = new Date(Date.UTC(year, month - 1, day, hour, minute));
 
     // Get calculated data from our astrology service
-    const kundliData = await getKundliData({ date: birthDateObj, lat, lon });
-    const yogasAndDoshas = await getVedicYogasAndDoshas(kundliData.planets, kundliData.ascendant.sign);
-
-    const moon = kundliData.planets.find(p => p.name === 'Moon');
-    if (!moon) throw new Error("Could not calculate Moon's position.");
-    const mahadashas = await getVimshottariDasha(moon.degree, birthDateObj);
+    const kundliData = await getKundliData({ date: birthDateObj, timeOfBirth: input.timeOfBirth, placeOfBirth: input.placeOfBirth });
 
     const promptInput = {
         ...input,
-        ...kundliData,
-        yogasAndDoshas,
-        mahadashas
+        ascendant: kundliData.ascendant,
+        planets: kundliData.planets,
+        yogasAndDoshas: kundliData.yogasAndDoshas,
+        mahadashas: kundliData.mahadashas
     };
 
     const {output} = await prompt(promptInput);
@@ -141,7 +135,8 @@ const janamKundliAnalysisFlow = ai.defineFlow(
     
     return {
         report: output!.report,
-        mahadashas: mahadashas,
+        mahadashas: kundliData.mahadashas,
+        yogasAndDoshas: kundliData.yogasAndDoshas,
         chartData: {
              ascendant: kundliData.ascendant.sign,
              houses: housesForChart
