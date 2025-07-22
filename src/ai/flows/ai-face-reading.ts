@@ -44,14 +44,13 @@ const prompt = ai.definePrompt({
   config: {
     temperature: 0.7,
   },
-  prompt: `You are an expert in physiognomy (face reading). Your task is to analyze the provided photo of a person's face and generate a unique, specific analysis based ONLY on the features in that image. Do not use generic statements.
+  prompt: `You are an expert in physiognomy (face reading). Your task is to analyze the provided photo of a person's face and generate a unique, specific analysis based ONLY on the features in that image. Do not use generic statements. Your response MUST be unique and directly tied to the visual information in the photo.
 
 You MUST provide the entire analysis in the following language: {{{language}}}
 
 Photo: {{media url=photoDataUri}}
 
-Provide a detailed analysis for each of the following facial features based on what you see in the specific photo provided. Be insightful, positive, and encouraging.
-
+Provide a detailed analysis for each of the following facial features based on what you see in the specific photo provided. Be insightful, positive, and encouraging. Avoid generic, templated answers.
 - Forehead
 - Eyebrows
 - Eyes

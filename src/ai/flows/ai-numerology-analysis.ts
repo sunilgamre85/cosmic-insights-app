@@ -68,9 +68,9 @@ const prompt = ai.definePrompt({
   input: {schema: AiNumerologyAnalysisInputSchema},
   output: {schema: AiNumerologyAnalysisOutputSchema},
   config: {
-    temperature: 0,
+    temperature: 0.6,
   },
-  prompt: `You are an expert numerologist. Analyze the numerology of the person based on their name and date of birth.
+  prompt: `You are an expert numerologist. Analyze the numerology of the person based on their name and date of birth. Your response MUST be insightful and specific to the details provided, not generic.
 
 You MUST provide the entire analysis in the following language: {{{language}}}
 
@@ -79,7 +79,7 @@ Date of Birth: {{{dateOfBirth}}}
 Current Year: ${new Date().getFullYear()}
 
 Calculate all of the following numerology numbers and elements. Be thorough and accurate in your calculations.
-For each of the core numbers (Life Path, Destiny, Soul Urge, Personality, Birth Day, Maturity, Personal Year), provide both the number and a detailed, personal analysis of what that number means for this specific individual.
+For each of the core numbers (Life Path, Destiny, Soul Urge, Personality, Birth Day, Maturity, Personal Year), provide both the number and a detailed, personal analysis of what that number means for this specific individual. Avoid templated answers and provide practical, encouraging advice.
 
 - Life Path Number (from Date of Birth)
 - Destiny/Expression Number (from Full Name)

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -79,9 +80,9 @@ const prompt = ai.definePrompt({
   input: {schema: AnalyzePalmsInputSchema},
   output: {schema: AnalyzePalmsOutputSchema},
   config: {
-    temperature: 0.2,
+    temperature: 0.6,
   },
-  prompt: `You are an expert palm reader with an exceptional ability to differentiate between left and right hands. Your task is to analyze the user's provided palm images and deliver a comprehensive reading.
+  prompt: `You are an expert palm reader with an exceptional ability to differentiate between left and right hands. Your task is to analyze the user's provided palm images and deliver a comprehensive, insightful, and unique reading based ONLY on the provided images. Avoid generic responses.
 
 You MUST provide the entire analysis in the following language: {{{language}}}
 
