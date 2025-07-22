@@ -89,7 +89,12 @@ The user has provided the following images:
 Your analysis must be comprehensive. Please perform the following steps:
 
 PART 1: INDIVIDUAL HAND ANALYSIS
-For EACH HAND provided:
+- For EACH HAND provided, perform a full analysis.
+- If ONLY the left hand is provided, return your analysis in the 'leftHandAnalysis' field and leave 'rightHandAnalysis' empty.
+- If ONLY the right hand is provided, return your analysis in the 'rightHandAnalysis' field and leave 'leftHandAnalysis' empty.
+- If BOTH hands are provided, perform analysis for both and populate both fields.
+
+For each hand, your analysis should include:
 1.  **Analyze General Features:**
     *   Analyze the overall hand shape (classify as Earth, Air, Fire, or Water hand and explain the meaning).
     *   Analyze the prominent mounts, especially Venus, Jupiter, Saturn, and Mercury, and describe their implications.
