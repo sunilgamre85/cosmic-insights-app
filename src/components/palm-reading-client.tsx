@@ -195,7 +195,9 @@ export function PalmReadingClient() {
   );
 
   const AnalysisDisplay = ({ analysis, handTitle, previewUrl }: { analysis: SinglePalmAnalysis, handTitle: string, previewUrl: string | null }) => {
-    const lineDetails = analysis ? [
+    if (!analysis) return null;
+
+    const lineDetails = [
         ...(analysis.lifeLine ? [{ key: 'lifeLine', title: "Life Line", data: analysis.lifeLine, icon: <LifeBuoy className="h-5 w-5" /> }] : []),
         ...(analysis.headline ? [{ key: 'headline', title: "Head Line", data: analysis.headline, icon: <Brain className="h-5 w-5" /> }] : []),
         ...(analysis.heartLine ? [{ key: 'heartLine', title: "Heart Line", data: analysis.heartLine, icon: <Heart className="h-5 w-5" /> }] : []),
@@ -203,10 +205,10 @@ export function PalmReadingClient() {
         ...(analysis.sunLine ? [{ key: 'sunLine', title: "Sun Line (Apollo)", data: analysis.sunLine, icon: <Sun className="h-5 w-5" /> }] : []),
         ...(analysis.healthLine ? [{ key: 'healthLine', title: "Health Line", data: analysis.healthLine, icon: <Shield className="h-5 w-5" /> }] : []),
         ...(analysis.marriageLine ? [{ key: 'marriageLine', title: "Marriage Line", data: analysis.marriageLine, icon: <Heart className="h-5 w-5" /> }] : []),
-    ] : [];
+    ];
 
     return (
-        <Card className="flex-1">
+        <Card className="flex-1 min-w-0">
             <CardHeader>
                 <CardTitle className="font-headline text-2xl text-center">{handTitle}</CardTitle>
             </CardHeader>
@@ -360,7 +362,7 @@ export function PalmReadingClient() {
                 <div>
                   <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> Your Comprehensive AI Analysis</CardTitle>
                   <CardDescription>
-                    {result.combinedReport ? "Left hand shows potential, right hand shows action. See the full story below." : "Here is the analysis for the selected hand."}
+                    {result.leftHandAnalysis && result.rightHandAnalysis ? "Left hand shows potential, right hand shows action. See the full story below." : "Here is the analysis for the selected hand."}
                   </CardDescription>
                 </div>
                 <Button onClick={handleDownload} variant="outline" size="icon">
@@ -374,7 +376,7 @@ export function PalmReadingClient() {
                     {result.leftHandAnalysis && <AnalysisDisplay analysis={result.leftHandAnalysis} handTitle="Left Hand" previewUrl={leftPreviewUrl} />}
                     {result.rightHandAnalysis && <AnalysisDisplay analysis={result.rightHandAnalysis} handTitle="Right Hand" previewUrl={rightPreviewUrl} />}
                 </div>
-
+                
                 {result.combinedReport && (
                     <>
                         <Separator />
