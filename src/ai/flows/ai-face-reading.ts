@@ -41,13 +41,13 @@ const prompt = ai.definePrompt({
   input: {schema: AnalyzeFaceInputSchema},
   output: {schema: AnalyzeFaceOutputSchema},
   config: {
-    temperature: 0.3,
+    temperature: 0.7,
   },
-  prompt: `You are an expert in physiognomy (face reading). Analyze the provided photo of a person's face.
+  prompt: `You are an expert in physiognomy (face reading). Your task is to analyze the provided photo of a person's face and generate a unique, specific analysis based ONLY on the features in that image. Do not use generic statements.
 
 Photo: {{media url=photoDataUri}}
 
-Provide a detailed analysis for each of the following facial features. Base your analysis on traditional face reading principles. Be insightful, positive, and encouraging.
+Provide a detailed analysis for each of the following facial features based on what you see in the specific photo provided. Be insightful, positive, and encouraging.
 
 - Forehead
 - Eyebrows
@@ -74,5 +74,3 @@ const analyzeFaceFlow = ai.defineFlow(
     return output;
   }
 );
-
-    
