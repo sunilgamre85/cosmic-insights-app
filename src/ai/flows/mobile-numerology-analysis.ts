@@ -45,6 +45,9 @@ const prompt = ai.definePrompt({
   name: 'mobileNumerologyAnalysisPrompt',
   input: {schema: z.object({ ...MobileNumerologyAnalysisInputSchema.shape, vibrationNumber: z.number() })},
   output: {schema: MobileNumerologyAnalysisOutputSchema},
+  config: {
+    temperature: 0,
+  },
   prompt: `You are an expert numerologist specializing in mobile number numerology. Analyze the provided mobile number.
 
 Mobile Number: {{{mobileNumber}}}
