@@ -65,7 +65,7 @@ const AnalyzePalmsOutputSchema = z.object({
   leftHandAnalysis: SinglePalmAnalysisSchema.nullable().describe("The detailed analysis for the left hand. MUST be null if the left hand photo is not provided."),
   rightHandAnalysis: SinglePalmAnalysisSchema.nullable().describe("The detailed analysis for the right hand. MUST be null if the right hand photo is not provided."),
   combinedReport: CombinedReportSchema.optional().describe("A synthesized, structured report based on the provided hand(s)."),
-  error: z.string().optional().describe('An error message if the palms could not be analyzed.'),
+  error: z.string().optional().describe('An error message if the palms could not be analyzed. This includes cases where the wrong hand is uploaded (e.g. right hand in left hand slot) or if the image is unclear.'),
 });
 export type AnalyzePalmsOutput = z.infer<typeof AnalyzePalmsOutputSchema>;
 
@@ -80,7 +80,7 @@ const prompt = ai.definePrompt({
   config: {
     temperature: 0.2,
   },
-  prompt: `You are an expert palm reader. Your task is to analyze the user's provided palm images and deliver a comprehensive reading.
+  prompt: `You are an expert palm reader with an exceptional ability to differentiate between left and right hands. Your task is to analyze the user's provided palm images and deliver a comprehensive reading.
 
 The user has provided the following images:
 {{#if leftHandPhoto}}Left Palm (Represents potential & innate traits): {{media url=leftHandPhoto}}{{/if}}
@@ -88,33 +88,37 @@ The user has provided the following images:
 
 Your analysis must be comprehensive. Please perform the following steps:
 
+PART 0: VALIDATE HANDS
+- Before any analysis, you MUST validate that the correct hand is in the correct slot.
+- If a 'leftHandPhoto' is provided, confirm it is a left hand. If it is a right hand, set the 'error' field to "A right hand image was uploaded in the left hand slot. Please upload the correct image." and stop.
+- If a 'rightHandPhoto' is provided, confirm it is a right hand. If it is a left hand, set the 'error' field to "A left hand image was uploaded in the right hand slot. Please upload the correct image." and stop.
+- If you perform this validation and there is no error, the 'error' field MUST be undefined.
+
 PART 1: INDIVIDUAL HAND ANALYSIS
-- If ONLY the left hand is provided, perform a full analysis for it and populate the 'leftHandAnalysis' field. The 'rightHandAnalysis' field MUST be null.
-- If ONLY the right hand is provided, perform a full analysis for it and populate the 'rightHandAnalysis' field. The 'leftHandAnalysis' field MUST be null.
-- If BOTH hands are provided, perform analysis for both and populate both 'leftHandAnalysis' and 'rightHandAnalysis' fields.
+- If ONLY the left hand is provided (and validated), perform a full analysis for it and populate 'leftHandAnalysis'. 'rightHandAnalysis' MUST be null.
+- If ONLY the right hand is provided (and validated), perform a full analysis for it and populate 'rightHandAnalysis'. 'leftHandAnalysis' MUST be null.
+- If BOTH hands are provided (and validated), perform analysis for both and populate both 'leftHandAnalysis' and 'rightHandAnalysis'.
 
 For each hand, your analysis should include:
 1.  **Analyze General Features:**
     *   Analyze the overall hand shape (classify as Earth, Air, Fire, or Water hand and explain the meaning).
     *   Analyze the prominent mounts, especially Venus, Jupiter, Saturn, and Mercury, and describe their implications.
 2.  **Identify and Analyze Major Lines:**
-    *   Identify and analyze the major palm lines visible in the image: Life Line, Heart Line, Head Line.
-    *   Also, identify and analyze other important lines IF they are clearly visible: Fate Line, Sun Line (Apollo), Health Line, Marriage Line(s). If they are not visible or very faint, do not include them in the analysis for that hand.
+    *   Identify and analyze the major palm lines visible: Life Line, Heart Line, Head Line.
+    *   Also, identify and analyze other important lines IF clearly visible: Fate Line, Sun Line (Apollo), Health Line, Marriage Line(s). If not visible, do not include them.
 3.  **Provide Line Coordinates:**
-    *   For each line you positively identify, you MUST provide the coordinates for its path.
-    *   The path should be an array of {x, y} points, normalized from 0.0 to 1.0.
-    *   Trace each line with enough points (e.g., 5-10) to capture its curve accurately.
+    *   For each identified line, you MUST provide the coordinates for its path as an array of {x, y} points, normalized from 0.0 to 1.0. Trace each line with enough points (e.g., 5-10) to capture its curve accurately.
 
 PART 2: FINAL REPORT
 - Create a 'combinedReport' based on the hand(s) provided.
 - If both hands are present, compare and contrast the left hand (potential) with the right hand (action).
 - If only one hand is present, base the report on that single hand.
-- Synthesize all the information into a holistic, structured report with these sections:
+- Synthesize the information into a holistic report with these sections:
   - personalityTraits, loveAndRelationships, careerAndSuccess, healthAndVitality, warningsAndOpportunities.
 
 PART 3: ERROR HANDLING
-*   If an image is unclear, set the 'error' field with a helpful message. Do not attempt to analyze an unclear hand.
-*   If no images are provided, set the 'error' field to "No palm images were provided for analysis."
+- If an image is unclear, set the 'error' field with a helpful message. Do not attempt to analyze an unclear hand.
+- If no images are provided, set the 'error' field to "No palm images were provided for analysis."
 
 Return the full analysis in the requested JSON format, strictly adhering to the output schema.`,
 });
