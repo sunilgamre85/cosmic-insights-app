@@ -26,6 +26,7 @@ import {
   Smartphone,
   BookOpen,
   CalendarDays,
+  Smile,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -33,6 +34,7 @@ import { usePathname } from 'next/navigation';
 const menuItems = [
   { href: '/', icon: Home, label: 'Home' },
   { href: '/palm-reading', icon: Hand, label: 'Palm Reading' },
+  { href: '/face-reading', icon: Smile, label: 'Face Reading' },
   { href: '/numerology', icon: Gem, label: 'Numerology' },
   { href: '/horoscope', icon: Sparkles, label: 'Daily Horoscope' },
   { href: '/panchang', icon: CalendarDays, label: 'Daily Panchang' },

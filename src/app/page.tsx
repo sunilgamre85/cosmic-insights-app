@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Hand, Gem, Sparkles, Newspaper, Bot, Star, HeartHandshake, Smartphone, BookOpen, CalendarDays } from 'lucide-react';
+import { Hand, Gem, Sparkles, Newspaper, Bot, Star, HeartHandshake, Smartphone, BookOpen, CalendarDays, Smile } from 'lucide-react';
 
 const features = [
   {
@@ -10,6 +10,13 @@ const features = [
     link: '/palm-reading',
     icon: <Hand className="h-8 w-8 text-primary" />,
     cta: 'Read Your Palm',
+  },
+  {
+    title: 'Face Reading',
+    description: 'Discover insights into your personality and destiny based on your facial features.',
+    link: '/face-reading',
+    icon: <Smile className="h-8 w-8 text-primary" />,
+    cta: 'Read Your Face',
   },
   {
     title: 'Numerology Analysis',
