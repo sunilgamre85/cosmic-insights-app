@@ -1,1 +1,5 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/ai-numerology-analysis.ts';
+import '@/ai/flows/ai-palm-reading.ts';
