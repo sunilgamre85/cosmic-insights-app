@@ -207,7 +207,7 @@ export function JanamKundliClient() {
                   <FormItem>
                     <FormLabel>Place of Birth</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Kandivali, Mumbai" {...field} />
+                      <Input placeholder="e.g. London, UK" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
