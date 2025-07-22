@@ -30,11 +30,18 @@ const LineSchema = z.object({
     path: z.array(PointSchema).describe('An array of points representing the path of the line on the image.'),
 });
 
+const GeneralAnalysisSchema = z.object({
+    handShape: z.string().optional().describe('Analysis of the overall hand shape (e.g., Earth, Air, Fire, Water hand) and what it indicates about the personality.'),
+    mounts: z.string().optional().describe('Analysis of the prominent mounts like the Mount of Venus, Jupiter, and Saturn and their implications.'),
+});
+
 const AnalyzePalmOutputSchema = z.object({
   lifeLine: LineSchema.describe('Analysis and path of the life line.'),
   heartLine: LineSchema.describe('Analysis and path of the heart line.'),
   headline: LineSchema.describe('Analysis and path of the head line.'),
   fateLine: LineSchema.optional().describe('Analysis and path of the fate line (if visible).'),
+  sunLine: LineSchema.optional().describe('Analysis and path of the sun line, also known as the Apollo line (if visible).'),
+  generalAnalysis: GeneralAnalysisSchema.optional().describe('General analysis of other important palm features.'),
   error: z.string().optional().describe('An error message if the palm could not be analyzed.'),
 });
 export type AnalyzePalmOutput = z.infer<typeof AnalyzePalmOutputSchema>;
@@ -54,14 +61,27 @@ const prompt = ai.definePrompt({
 
 Palm Image: {{media url=photoDataUri}}
 
-Identify and analyze the major palm lines visible in the image (Life Line, Heart Line, Head Line, and Fate Line if present).
+Your analysis must be comprehensive. Please perform the following steps:
 
-For each line you identify, provide a detailed analysis.
-In addition to the analysis, you MUST provide the coordinates for the path of each line. The path should be an array of {x, y} points. The coordinates must be normalized, ranging from 0.0 to 1.0, where (0,0) is the top-left corner and (1,1) is the bottom-right corner of the image. Trace the line from its start to its end with a reasonable number of points (e.g., 5-10 points) to capture its curve.
+1.  **Identify and Analyze Major Lines:**
+    *   Identify and analyze the major palm lines visible in the image: Life Line, Heart Line, Head Line.
+    *   Also, identify and analyze the Fate Line and the Sun Line (also called the Apollo Line) if they are present.
+    *   For each line you identify, provide a detailed analysis.
 
-If you cannot clearly identify the palm or its lines from the image, set the 'error' field with a helpful message like "The image is unclear or does not appear to be a palm. Please provide a clear, well-lit photo of a palm."
+2.  **Provide Line Coordinates:**
+    *   For each line you identify, you MUST provide the coordinates for its path.
+    *   The path should be an array of {x, y} points.
+    *   The coordinates must be normalized, ranging from 0.0 to 1.0, where (0,0) is the top-left corner and (1,1) is the bottom-right corner of the image.
+    *   Trace each line from its start to its end with a reasonable number of points (e.g., 5-10 points) to capture its curve accurately.
 
-Return the full analysis and all coordinate paths in the requested JSON format. If there is an error, return the error message and leave the line fields empty.`,
+3.  **Analyze General Features:**
+    *   Provide an analysis of the overall hand shape (e.g., classify as Earth, Air, Fire, or Water hand and explain the meaning).
+    *   Analyze the prominent mounts, especially the Mounts of Venus, Jupiter, and Saturn, and describe their implications for the person's character and life.
+
+4.  **Error Handling:**
+    *   If you cannot clearly identify the palm or its lines from the image, set the 'error' field with a helpful message like "The image is unclear or does not appear to be a palm. Please provide a clear, well-lit photo of a palm." In this case, leave the other fields empty.
+
+Return the full analysis, all coordinate paths, and general feature analysis in the requested JSON format.`,
 });
 
 const analyzePalmFlow = ai.defineFlow(

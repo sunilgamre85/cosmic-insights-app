@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle } from "lucide-react";
+import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes } from "lucide-react";
 import { analyzePalm, type AnalyzePalmOutput } from "@/ai/flows/ai-palm-reading";
 import { Separator } from "./ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
@@ -19,6 +19,7 @@ const lineColors = {
     headline: 'stroke-blue-500',
     heartLine: 'stroke-pink-500',
     fateLine: 'stroke-purple-500',
+    sunLine: 'stroke-yellow-500',
 };
 
 const highlightedLineColors = {
@@ -26,6 +27,7 @@ const highlightedLineColors = {
     headline: 'stroke-blue-400',
     heartLine: 'stroke-pink-400',
     fateLine: 'stroke-purple-400',
+    sunLine: 'stroke-yellow-400',
 };
 
 const lineTextColors = {
@@ -33,6 +35,7 @@ const lineTextColors = {
     headline: 'text-blue-500',
     heartLine: 'text-pink-500',
     fateLine: 'text-purple-500',
+    sunLine: 'text-yellow-500',
 };
 
 
@@ -120,7 +123,8 @@ export function PalmReadingClient() {
     ...(result.lifeLine ? [{ key: 'lifeLine', title: "Life Line", data: result.lifeLine, icon: <Hand className="h-5 w-5" /> }] : []),
     ...(result.headline ? [{ key: 'headline', title: "Head Line", data: result.headline, icon: <Brain className="h-5 w-5" /> }] : []),
     ...(result.heartLine ? [{ key: 'heartLine', title: "Heart Line", data: result.heartLine, icon: <Heart className="h-5 w-5" /> }] : []),
-    ...(result.fateLine ? [{ key: 'fateLine', title: "Fate Line", data: result.fateLine, icon: <Sparkles className="h-5 w-5" /> }] : [])
+    ...(result.fateLine ? [{ key: 'fateLine', title: "Fate Line", data: result.fateLine, icon: <Sparkles className="h-5 w-5" /> }] : []),
+    ...(result.sunLine ? [{ key: 'sunLine', title: "Sun Line (Apollo)", data: result.sunLine, icon: <Sun className="h-5 w-5" /> }] : [])
   ] : [];
 
   const svgPath = (points: {x: number, y: number}[]) => {
@@ -216,21 +220,22 @@ export function PalmReadingClient() {
                     </div>
                 )}
                  {lineDetails.length > 0 ? lineDetails.map((detail, index) => detail.data && (
-                    <div 
-                      key={detail.key}
-                      onMouseEnter={() => setHighlightedLine(detail.key)}
-                      onMouseLeave={() => setHighlightedLine(null)}
-                      className="cursor-pointer"
-                    >
-                        <h3 className={`font-headline text-xl flex items-center gap-2 ${lineTextColors[detail.key as keyof typeof lineTextColors]}`}>
-                            {React.cloneElement(detail.icon, { className: `h-5 w-5 ${lineTextColors[detail.key as keyof typeof lineTextColors]}` })} 
-                            {detail.title}
-                        </h3>
-                        <p className="mt-2 text-base text-foreground/90 pl-7">
-                            {detail.data.analysis}
-                        </p>
-                        {index < lineDetails.length - 1 && <Separator className="mt-6" />}
-                    </div>
+                    <React.Fragment key={detail.key}>
+                      <div 
+                        onMouseEnter={() => setHighlightedLine(detail.key)}
+                        onMouseLeave={() => setHighlightedLine(null)}
+                        className="cursor-pointer"
+                      >
+                          <h3 className={`font-headline text-xl flex items-center gap-2 ${lineTextColors[detail.key as keyof typeof lineTextColors]}`}>
+                              {React.cloneElement(detail.icon, { className: `h-5 w-5 ${lineTextColors[detail.key as keyof typeof lineTextColors]}` })} 
+                              {detail.title}
+                          </h3>
+                          <p className="mt-2 text-base text-foreground/90 pl-7">
+                              {detail.data.analysis}
+                          </p>
+                      </div>
+                      <Separator className="mt-6" />
+                    </React.Fragment>
                 )) : (
                     <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
@@ -239,6 +244,28 @@ export function PalmReadingClient() {
                             The AI was unable to identify the standard palm lines in the provided image. Please try again with a clearer, more direct photo of your palm.
                         </AlertDescription>
                     </Alert>
+                )}
+                
+                {result.generalAnalysis && (
+                  <div>
+                    <h3 className="font-headline text-xl flex items-center gap-2 text-primary">
+                        <Shapes className="h-5 w-5" /> General Palm Features
+                    </h3>
+                    <div className="space-y-4 mt-2 pl-7">
+                        {result.generalAnalysis.handShape && (
+                           <div>
+                             <h4 className="font-semibold">Hand Shape</h4>
+                             <p className="text-base text-foreground/90">{result.generalAnalysis.handShape}</p>
+                           </div>
+                        )}
+                        {result.generalAnalysis.mounts && (
+                           <div>
+                             <h4 className="font-semibold">Mounts Analysis</h4>
+                             <p className="text-base text-foreground/90">{result.generalAnalysis.mounts}</p>
+                           </div>
+                        )}
+                    </div>
+                  </div>
                 )}
             </CardContent>
         </Card>
