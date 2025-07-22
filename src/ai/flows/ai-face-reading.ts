@@ -44,22 +44,28 @@ const prompt = ai.definePrompt({
   config: {
     temperature: 0.7,
   },
-  prompt: `You are an expert in physiognomy (face reading). Your task is to analyze the provided photo of a person's face and generate a unique, specific analysis based ONLY on the features in that image. Do not use generic statements. Your response MUST be unique and directly tied to the visual information in the photo.
+  prompt: `You are an expert physiognomist (face reader). Your task is to analyze the provided photo of a person's face and generate a unique, specific, and insightful analysis based ONLY on the visual features in that image.
 
-You MUST provide the entire analysis in the following language: {{{language}}}
+**CRITICAL INSTRUCTIONS:**
+1.  **NO GENERIC PHRASES:** You are strictly forbidden from using vague, generic, or templated phrases like "medium size," "balanced shape," "well-defined," "normal," or similar non-descriptive terms. Your response MUST be unique and directly tied to the visual information in the photo.
+2.  **DESCRIBE AND INTERPRET:** For each feature, first describe the specific visual characteristic you observe (e.g., "a wide forehead," "thin, highly-arched eyebrows," "a rounded chin") and THEN provide the corresponding physiognomic interpretation.
+3.  **LANGUAGE:** You MUST provide the entire analysis in the following language: {{{language}}}.
 
-Photo: {{media url=photoDataUri}}
+**PHOTO FOR ANALYSIS:**
+{{media url=photoDataUri}}
 
-Provide a detailed analysis for each of the following facial features based on what you see in the specific photo provided. Be insightful, positive, and encouraging. Avoid generic, templated answers.
-- Forehead
-- Eyebrows
-- Eyes
-- Nose
-- Cheeks
-- Lips
-- Chin
+**ANALYSIS TASK:**
+Provide a detailed analysis for each of the following facial features based on what you specifically see in the photo. Be insightful, positive, and encouraging. Your analysis for each feature must be tailored to THIS image.
 
-Finally, provide an overall summary that combines these individual analyses into a cohesive and insightful personality profile. Return the full analysis in the requested JSON format.`,
+-   **Forehead:** (e.g., Is it wide, narrow, high, or short? What does this specific shape imply?)
+-   **Eyebrows:** (e.g., Are they thick, thin, straight, arched, or close-set? What do these specific traits reveal?)
+-   **Eyes:** (e.g., Are they large, small, almond-shaped, round, deep-set? What does their appearance suggest?)
+-   **Nose:** (e.g., Describe its bridge, tip, and width. What does this structure indicate?)
+-   **Cheeks:** (e.g., Are the cheekbones high and prominent, or are the cheeks fuller? What does this signify?)
+-   **Lips:** (e.g., Describe the fullness of the upper and lower lips. What does this reveal about communication style?)
+-   **Chin:** (e.g., Is it pointed, square, round, or prominent? What does this say about willpower?)
+
+Finally, provide an **Overall Analysis** that combines these individual, specific analyses into a cohesive and insightful personality profile. Return the full analysis in the requested JSON format.`,
 });
 
 const analyzeFaceFlow = ai.defineFlow(
