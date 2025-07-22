@@ -6,4 +6,4 @@ import '@/ai/flows/ai-palm-reading.ts';
 import '@/ai/flows/janam-kundli-analysis.ts';
 import '@/ai/flows/ai-chat.ts';
 import '@/ai/flows/tarot-card-reading.ts';
-
+import '@/ai/flows/ai-mobile-numerology-analysis.ts';

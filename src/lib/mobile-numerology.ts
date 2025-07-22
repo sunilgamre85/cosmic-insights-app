@@ -1,4 +1,7 @@
-// lib/mobile-numerology.ts
+// This file is no longer used for the main analysis, 
+// as the logic has been upgraded to a more detailed AI flow 
+// in src/ai/flows/ai-mobile-numerology-analysis.ts.
+// It is kept for reference or potential future use in simple, non-AI contexts.
 
 export type NumerologyResult = {
   number: string;

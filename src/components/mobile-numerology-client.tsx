@@ -1,41 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Smartphone, Wand2 } from "lucide-react";
-import { analyzeMobileNumber, type NumerologyResult } from "@/lib/mobile-numerology";
+import { CalendarIcon, Loader2, Smartphone, Wand2 } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
+import { useUserInput } from "@/context/UserInputContext";
+import { aiMobileNumerologyAnalysis, type AiMobileNumerologyAnalysisOutput } from "@/ai/flows/ai-mobile-numerology-analysis";
 
 const formSchema = z.object({
+  name: z.string().min(2, "Please enter a valid name."),
+  dateOfBirth: z.date({
+    required_error: "A date of birth is required.",
+  }),
   mobileNumber: z.string().min(10, "Please enter a valid 10-digit mobile number.").max(15, "Please enter a valid mobile number."),
 });
 
 export function MobileNumerologyClient() {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<NumerologyResult | null>(null);
+  const [result, setResult] = useState<AiMobileNumerologyAnalysisOutput | null>(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const { toast } = useToast();
+  const { userDetails, setUserDetails } = useUserInput();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: userDetails.name || "",
+      dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
       mobileNumber: "",
     },
   });
+
+   useEffect(() => {
+    form.reset({
+      name: userDetails.name || "",
+      dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
+      mobileNumber: form.getValues("mobileNumber") || "",
+    });
+  }, [userDetails, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setResult(null);
     try {
-      // Using the local function instead of an AI flow
-      const analysisResult = analyzeMobileNumber(values.mobileNumber);
+      setUserDetails({
+        name: values.name,
+        dateOfBirth: values.dateOfBirth.toISOString(),
+      });
+      const analysisResult = await aiMobileNumerologyAnalysis({
+        name: values.name,
+        dateOfBirth: format(values.dateOfBirth, "yyyy-MM-dd"),
+        mobileNumber: values.mobileNumber,
+      });
       setResult(analysisResult);
     } catch (error) {
       console.error("Analysis failed:", error);
@@ -54,11 +82,71 @@ export function MobileNumerologyClient() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="font-headline">Check Your Mobile Number Vibration</CardTitle>
-          <CardDescription>Enter your mobile number for a numerological analysis.</CardDescription>
+          <CardDescription>Enter your details and mobile number for a compatibility analysis.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Jane Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="dateOfBirth"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date of Birth</FormLabel>
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          captionLayout="dropdown-buttons"
+                          fromYear={1900}
+                          toYear={new Date().getFullYear()}
+                          selected={field.value}
+                          onSelect={(date) => {
+                            field.onChange(date);
+                            setIsCalendarOpen(false);
+                          }}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="mobileNumber"
@@ -100,7 +188,7 @@ export function MobileNumerologyClient() {
             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
               <Smartphone className="h-12 w-12 mb-4" />
               <p>Is your mobile number lucky for you?</p>
-              <p className="text-sm">Enter your number to find out.</p>
+              <p className="text-sm">Enter your details to find out.</p>
             </div>
           )}
           {result && (
@@ -108,17 +196,17 @@ export function MobileNumerologyClient() {
             <div className="space-y-6 animate-in fade-in-50 duration-500">
                 <div className="text-center p-4 rounded-lg bg-secondary">
                     <h3 className="font-headline text-lg text-secondary-foreground">Final Number</h3>
-                    <p className="text-6xl font-bold text-primary">{result.reduced}</p>
-                    <p className="text-sm text-muted-foreground">Total Sum: {result.sum}</p>
+                    <p className="text-6xl font-bold text-primary">{result.mobileNumberTotal}</p>
+                    <p className="text-sm text-muted-foreground">Original Number: {result.originalMobileNumber}</p>
                 </div>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline text-xl">Meaning of Number {result.reduced}</CardTitle>
+                        <CardTitle className="font-headline text-xl">Compatibility Analysis</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-lg text-center text-foreground/90">
-                           {result.meaning}
+                        <p className="text-base text-foreground/90 whitespace-pre-wrap">
+                           {result.compatibilityAnalysis}
                         </p>
                     </CardContent>
                 </Card>
