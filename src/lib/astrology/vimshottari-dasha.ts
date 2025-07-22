@@ -3,7 +3,9 @@
 import { Planet } from './types';
 import { getMoonPosition } from './planetary';
 import { getJulianDay } from './julian';
-import { getLahiriAyanamsa, applyAyanamsa } from './ayanamsa';
+import { applyAyanamsa } from './ayanamsa';
+import dayjs from "dayjs";
+
 
 /**
  * Nakshatra list with ruling planets and their Mahadasha duration
@@ -38,6 +40,23 @@ const nakshatraData = [
   { name: "Revati", ruler: "Mercury", startDeg: 346.6667, duration: 17 },
 ];
 
+const DURATION: Record<string, number> = {
+  Ketu: 7,
+  Venus: 20,
+  Sun: 6,
+  Moon: 10,
+  Mars: 7,
+  Rahu: 18,
+  Jupiter: 16,
+  Saturn: 19,
+  Mercury: 17,
+};
+
+const DashaSequence = [
+  "Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury",
+];
+
+
 /**
  * Determine which nakshatra the moon is in
  */
@@ -46,6 +65,12 @@ function getNakshatra(deg: number) {
   const nakshatraIndex = Math.floor(deg / nakshatraSize);
   return nakshatraData[nakshatraIndex];
 }
+
+type DashaPeriod = {
+  planet: string;
+  start: string;
+  end: string;
+};
 
 /**
  * Calculate Vimshottari Mahadasha periods starting from moon position
@@ -60,23 +85,35 @@ export function getVimshottariDasha(date: Date, lat: number, lon: number) {
   const nakEnd = nakStart + 13.333333;
 
   const portion = (moonSidereal - nakStart) / (nakEnd - nakStart);
-  const balance = nak.duration * (1 - portion);
+  const balanceYears = nak.duration * (1 - portion);
 
-  const sequence: Planet[] = [
-    "Ketu", "Venus", "Sun", "Moon", "Mars",
-    "Rahu", "Jupiter", "Saturn", "Mercury"
-  ];
+  const dashaList: DashaPeriod[] = [];
+  let dashaStart = dayjs(date);
 
-  const startIndex = sequence.indexOf(nak.ruler as Planet);
-  const dashaList: { planet: string; years: number }[] = [];
+  // First dasha with balance duration
+  let dashaEnd = dashaStart.add(balanceYears * 365.25, 'day');
+  dashaList.push({
+      planet: nak.ruler,
+      start: dashaStart.format("YYYY-MM-DD"),
+      end: dashaEnd.format("YYYY-MM-DD"),
+  });
+  dashaStart = dashaEnd;
 
-  for (let i = 0; i < 9; i++) {
-    const planet = sequence[(startIndex + i) % 9];
-    const durData = nakshatraData.find(n => n.ruler === planet);
-    if (durData) {
-        const dur = durData.duration;
-        dashaList.push({ planet, years: i === 0 ? balance : dur });
-    }
+
+  const startIndex = DashaSequence.indexOf(nak.ruler as Planet);
+
+  for (let i = 1; i < DashaSequence.length; i++) {
+    const planet = DashaSequence[(startIndex + i) % DashaSequence.length];
+    const years = DURATION[planet];
+    dashaEnd = dashaStart.add(years, "year");
+
+    dashaList.push({
+      planet,
+      start: dashaStart.format("YYYY-MM-DD"),
+      end: dashaEnd.format("YYYY-MM-DD"),
+    });
+    
+    dashaStart = dashaEnd;
   }
 
   return {
