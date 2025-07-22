@@ -14,10 +14,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, Loader2, Smartphone, Calculator, Wand2 } from "lucide-react";
+import { CalendarIcon, Loader2, Smartphone, Wand2, Sparkles, Gem, Star, MessageCircle, ShieldCheck } from "lucide-react";
 import { mobileNumerologyAnalysis, type MobileNumerologyAnalysisOutput } from "@/ai/flows/mobile-numerology-analysis";
 import { useUserInput } from "@/context/UserInputContext";
 import { Separator } from "./ui/separator";
+import { Badge } from "./ui/badge";
+import { ScrollArea } from "./ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 
 const formSchema = z.object({
   mobileNumber: z.string().min(10, "Please enter a valid 10-digit mobile number.").max(15, "Please enter a valid mobile number."),
@@ -53,7 +56,6 @@ export function MobileNumerologyClient() {
     setIsLoading(true);
     setResult(null);
     try {
-      // Save details if they haven't been saved before
       if (values.name && values.dateOfBirth && (!userDetails.name || !userDetails.dateOfBirth)) {
         setUserDetails({
           name: values.name,
@@ -193,29 +195,70 @@ export function MobileNumerologyClient() {
             </div>
           )}
           {result && (
-            <div className="space-y-4 animate-in fade-in-50 duration-500">
+            <ScrollArea className="h-[calc(100vh-220px)] w-full pr-4">
+            <div className="space-y-6 animate-in fade-in-50 duration-500">
                 <div className="text-center p-4 rounded-lg bg-secondary">
-                    <h3 className="font-headline text-xl">Vibration Number</h3>
+                    <h3 className="font-headline text-lg text-secondary-foreground">Vibration Number</h3>
                     <p className="text-6xl font-bold text-primary">{result.vibrationNumber}</p>
                 </div>
-                
-                <Separator />
 
-                <div>
-                  <h4 className="font-headline text-lg mb-2">Analysis</h4>
-                  <p className="text-base text-foreground/90 whitespace-pre-wrap">{result.analysis}</p>
-                </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-xl flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary"/> Personalized Affirmation</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-lg italic text-center text-foreground/90">"{result.affirmation}"</p>
+                    </CardContent>
+                </Card>
+
+                <Accordion type="single" collapsible defaultValue="analysis" className="w-full">
+                    <AccordionItem value="analysis">
+                        <AccordionTrigger className="font-headline text-lg">Vibration Analysis</AccordionTrigger>
+                        <AccordionContent className="text-base whitespace-pre-wrap">{result.analysis}</AccordionContent>
+                    </AccordionItem>
+                    {result.compatibility && (
+                        <AccordionItem value="compatibility">
+                            <AccordionTrigger className="font-headline text-lg">Compatibility with Life Path</AccordionTrigger>
+                            <AccordionContent className="text-base whitespace-pre-wrap">{result.compatibility}</AccordionContent>
+                        </AccordionItem>
+                    )}
+                </Accordion>
                 
-                {result.compatibility && (
-                    <>
-                        <Separator />
-                        <div>
-                            <h4 className="font-headline text-lg mb-2">Compatibility with Your Life Path</h4>
-                            <p className="text-base text-foreground/90 whitespace-pre-wrap">{result.compatibility}</p>
+                <Card className="bg-secondary/50">
+                    <CardHeader>
+                        <CardTitle className="font-headline text-xl flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary"/> Cosmic Guidance</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center gap-4">
+                            <Star className="h-6 w-6 text-accent" />
+                            <div>
+                                <h4 className="font-semibold">Ruling Planet</h4>
+                                <p className="text-muted-foreground">{result.rulingPlanet}</p>
+                            </div>
                         </div>
-                    </>
-                )}
+                         <div className="flex items-center gap-4">
+                            <Gem className="h-6 w-6 text-accent" />
+                            <div>
+                                <h4 className="font-semibold">Lucky Gemstone</h4>
+                                <p className="text-muted-foreground">{result.gemstone}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-xl flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary"/> Simple Remedies</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ul className="list-disc pl-5 space-y-2 text-foreground/90">
+                            {result.remedies.map((remedy, index) => <li key={index}>{remedy}</li>)}
+                        </ul>
+                    </CardContent>
+                </Card>
+
             </div>
+            </ScrollArea>
           )}
         </CardContent>
       </Card>
