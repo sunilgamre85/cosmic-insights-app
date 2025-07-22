@@ -20,13 +20,21 @@ const AnalyzePalmInputSchema = z.object({
 });
 export type AnalyzePalmInput = z.infer<typeof AnalyzePalmInputSchema>;
 
+const PointSchema = z.object({
+    x: z.number().describe('The x-coordinate of a point on the line, normalized between 0 and 1.'),
+    y: z.number().describe('The y-coordinate of a point on the line, normalized between 0 and 1.'),
+});
+
+const LineSchema = z.object({
+    analysis: z.string().describe('The detailed analysis of this specific palm line.'),
+    path: z.array(PointSchema).describe('An array of points representing the path of the line on the image.'),
+});
+
 const AnalyzePalmOutputSchema = z.object({
-  analysis: z.object({
-    fateLine: z.string().describe('Analysis of the fate line.'),
-    lifeLine: z.string().describe('Analysis of the life line.'),
-    heartLine: z.string().describe('Analysis of the heart line.'),
-    headline: z.string().describe('Analysis of the head line.'),
-  }).describe('Detailed analysis of the palm lines.'),
+  lifeLine: LineSchema.describe('Analysis and path of the life line.'),
+  heartLine: LineSchema.describe('Analysis and path of the heart line.'),
+  headline: LineSchema.describe('Analysis and path of the head line.'),
+  fateLine: LineSchema.optional().describe('Analysis and path of the fate line (if visible).'),
 });
 export type AnalyzePalmOutput = z.infer<typeof AnalyzePalmOutputSchema>;
 
@@ -39,19 +47,18 @@ const prompt = ai.definePrompt({
   input: {schema: AnalyzePalmInputSchema},
   output: {schema: AnalyzePalmOutputSchema},
   config: {
-    temperature: 0,
+    temperature: 0.2,
   },
-  prompt: `You are an expert palm reader. Analyze the user's palm and provide insights based on the palm lines.
-
-Use the following as the source of information about the palm.
+  prompt: `You are an expert palm reader. Analyze the user's palm from the provided image.
 
 Palm Image: {{media url=photoDataUri}}
 
-Analyze each of the major palm lines: fate line, life line, heart line, and head line.
+For each of the major palm lines (Life Line, Heart Line, Head Line, and Fate Line if visible), provide a detailed analysis.
+In addition to the analysis, you MUST provide the coordinates for the path of each line.
+The path should be an array of {x, y} points. The coordinates must be normalized, ranging from 0.0 to 1.0, where (0,0) is the top-left corner and (1,1) is the bottom-right corner of the image.
+Trace the line from its start to its end with a reasonable number of points (e.g., 5-10 points) to capture its curve.
 
-Return the analysis in the following JSON format:
-
-${JSON.stringify(AnalyzePalmOutputSchema.shape, null, 2)}`,
+Return the full analysis and all coordinate paths in the requested JSON format.`,
 });
 
 const analyzePalmFlow = ai.defineFlow(

@@ -7,10 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles } from "lucide-react";
+import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain } from "lucide-react";
 import { analyzePalm, type AnalyzePalmOutput } from "@/ai/flows/ai-palm-reading";
 import { Separator } from "./ui/separator";
 
+const lineColors = {
+    lifeLine: 'stroke-red-500',
+    headline: 'stroke-blue-500',
+    heartLine: 'stroke-pink-500',
+    fateLine: 'stroke-purple-500',
+};
 
 export function PalmReadingClient() {
   const [file, setFile] = useState<File | null>(null);
@@ -89,11 +95,17 @@ export function PalmReadingClient() {
   };
   
   const lineDetails = result ? [
-    { title: "Life Line", content: result.analysis.lifeLine, icon: <Hand className="h-5 w-5 mr-2 text-primary" /> },
-    { title: "Head Line", content: result.analysis.headline, icon: <Bot className="h-5 w-5 mr-2 text-primary" /> },
-    { title: "Heart Line", content: result.analysis.heartLine, icon: <Wand2 className="h-5 w-5 mr-2 text-primary" /> },
-    { title: "Fate Line", content: result.analysis.fateLine, icon: <Sparkles className="h-5 w-5 mr-2 text-primary" /> },
+    { key: 'lifeLine', title: "Life Line", data: result.lifeLine, icon: <Hand className="h-5 w-5 text-primary" /> },
+    { key: 'headline', title: "Head Line", data: result.headline, icon: <Brain className="h-5 w-5 text-primary" /> },
+    { key: 'heartLine', title: "Heart Line", data: result.heartLine, icon: <Heart className="h-5 w-5 text-primary" /> },
+    ...(result.fateLine ? [{ key: 'fateLine', title: "Fate Line", data: result.fateLine, icon: <Sparkles className="h-5 w-5 text-primary" /> }] : [])
   ] : [];
+
+  const svgPath = (points: {x: number, y: number}[]) => {
+      if (!points || points.length === 0) return "";
+      return `M ${points.map(p => `${p.x * 100}% ${p.y * 100}%`).join(' L ')}`;
+  };
+
 
   return (
     <div className="space-y-8">
@@ -158,13 +170,30 @@ export function PalmReadingClient() {
             <CardDescription>Your personalized palm reading results appear below.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                 {lineDetails.map((detail, index) => (
-                    <div key={detail.title}>
+                {previewUrl && (
+                    <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
+                        <Image src={previewUrl} alt="Palm analysis" layout="fill" objectFit="contain" />
+                        <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            {lineDetails.map(line => line.data && line.data.path && (
+                                <path
+                                    key={line.key}
+                                    d={svgPath(line.data.path)}
+                                    className={`${lineColors[line.key as keyof typeof lineColors]} fill-none`}
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+                            ))}
+                        </svg>
+                    </div>
+                )}
+                 {lineDetails.map((detail, index) => detail.data && (
+                    <div key={detail.key}>
                         <h3 className="font-headline text-xl flex items-center gap-2">
                             {detail.icon} {detail.title}
                         </h3>
                         <p className="mt-2 text-base text-foreground/90 pl-7">
-                            {detail.content}
+                            {detail.data.analysis}
                         </p>
                         {index < lineDetails.length - 1 && <Separator className="mt-6" />}
                     </div>
