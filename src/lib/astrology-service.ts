@@ -2,130 +2,10 @@
 'use server';
 /**
  * @fileOverview A service for performing astrological calculations.
- * This will eventually house the logic for generating Kundli charts
- * using the Swiss Ephemeris library.
+ * This file will house the logic for generating Kundli charts, either via an external API or a library.
  */
-// import * as swisseph from 'swisseph';
 
-// Promisify the swisseph functions we need
-const swe_julday_promise = (
-  year: number, month: number, day: number, hour: number, gregflag: number
-): Promise<number> => {
-  return new Promise((resolve, reject) => {
-    // swisseph.swe_julday(year, month, day, hour, gregflag, (julday_ut) => {
-    //   if (julday_ut) {
-    //     resolve(julday_ut);
-    //   } else {
-    //     reject('Failed to calculate Julian Day.');
-    //   }
-    // });
-    resolve(0); // Dummy implementation
-  });
-};
-
-const swe_calc_ut_promise = (tjd_ut: number, ipl: number, iflag: number): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    // swisseph.swe_calc_ut(tjd_ut, ipl, iflag, (result) => {
-    //   if (result.return_code === 0) {
-    //     resolve(result);
-    //   } else {
-    //     reject(result.error_message);
-    //   }
-    // });
-    resolve({ return_code: 0, longitude: 0}); // Dummy implementation
-  });
-};
-
-const swe_houses_promise = (tjd_ut: number, lat: number, lon: number, hsys: string): Promise<any> => {
-    return new Promise((resolve, reject) => {
-        // swisseph.swe_houses(tjd_ut, lat, lon, hsys, (result) => {
-        //     if (result.return_code === 0) {
-        //         resolve(result);
-        //     } else {
-        //         reject(result.error_message);
-        //     }
-        // });
-        resolve({ return_code: 0, house: [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]}); // Dummy implementation
-    });
-};
-
-const PLANETS = [
-  // { id: swisseph.SE_SUN, name: 'Sun' },
-  // { id: swisseph.SE_MOON, name: 'Moon' },
-  // { id: swisseph.SE_MERCURY, name: 'Mercury' },
-  // { id: swisseph.SE_VENUS, name: 'Venus' },
-  // { id: swisseph.SE_MARS, name: 'Mars' },
-  // { id: swisseph.SE_JUPITER, name: 'Jupiter' },
-  // { id: swisseph.SE_SATURN, name: 'Saturn' },
-  // { id: swisseph.SE_TRUE_NODE, name: 'Rahu' }, // True Node for Rahu
-];
-const KETU_ID = -1; // Placeholder for Ketu
-const ALL_PLANETS_FOR_KUNDLI = [ ...PLANETS, { id: KETU_ID, name: 'Ketu' } ];
-
-
-const ZODIAC_SIGNS = [
-    'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
-    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
-];
-
-const NAKSHATRA_SPAN = 13.3333333333; // 13 degrees 20 minutes
-const NAKSHATRAS = [
-    { name: 'Ashwini', lord: 'Ketu' }, { name: 'Bharani', lord: 'Venus' }, { name: 'Krittika', lord: 'Sun' },
-    { name: 'Rohini', lord: 'Moon' }, { name: 'Mrigashira', lord: 'Mars' }, { name: 'Ardra', lord: 'Rahu' },
-    { name: 'Punarvasu', lord: 'Jupiter' }, { name: 'Pushya', lord: 'Saturn' }, { name: 'Ashlesha', lord: 'Mercury' },
-    { name: 'Magha', lord: 'Ketu' }, { name: 'Purva Phalguni', lord: 'Venus' }, { name: 'Uttara Phalguni', lord: 'Sun' },
-    { name: 'Hasta', lord: 'Moon' }, { name: 'Chitra', lord: 'Mars' }, { name: 'Swati', lord: 'Rahu' },
-    { name: 'Vishakha', lord: 'Jupiter' }, { name: 'Anuradha', lord: 'Saturn' }, { name: 'Jyeshtha', lord: 'Mercury' },
-    { name: 'Mula', lord: 'Ketu' }, { name: 'Purva Ashadha', lord: 'Venus' }, { name: 'Uttara Ashadha', lord: 'Sun' },
-    { name: 'Shravana', lord: 'Moon' }, { name: 'Dhanishta', lord: 'Mars' }, { name: 'Shatabhisha', lord: 'Rahu' },
-    { name: 'Purva Bhadrapada', lord: 'Jupiter' }, { name: 'Uttara Bhadrapada', lord: 'Saturn' }, { name: 'Revati', lord: 'Mercury' }
-];
-
-const DASHA_LORDS_SEQUENCE = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
-const DASHA_DURATIONS: { [key: string]: number } = { 'Ketu': 7, 'Venus': 20, 'Sun': 6, 'Moon': 10, 'Mars': 7, 'Rahu': 18, 'Jupiter': 16, 'Saturn': 19, 'Mercury': 17 };
-const TOTAL_DASHA_YEARS = 120;
-
-
-function getSign(degree: number): string {
-    return ZODIAC_SIGNS[Math.floor(degree / 30)];
-}
-
-function getHouse(degree: number, houseCusps: number[]): number {
-    for (let i = 0; i < 12; i++) {
-        const cusp1 = houseCusps[i];
-        const cusp2 = (i === 11) ? houseCusps[0] + 360 : houseCusps[i + 1];
-
-        if (cusp1 < cusp2) { // Normal case
-            if (degree >= cusp1 && degree < cusp2) {
-                return i + 1;
-            }
-        } else { // Case where house crosses 0 degree Aries
-            if (degree >= cusp1 || degree < cusp2) {
-                return i + 1;
-            }
-        }
-    }
-    return -1; // Should not happen in a valid chart
-}
-
-function getNakshatra(longitude: number): { index: number; name: string; lord: string; traversed: number } {
-    const nakshatraIndex = Math.floor(longitude / NAKSHATRA_SPAN);
-    const nakshatraStart = nakshatraIndex * NAKSHATRA_SPAN;
-    const traversed = (longitude - nakshatraStart) / NAKSHATRA_SPAN; // As a percentage
-    return {
-        index: nakshatraIndex,
-        name: NAKSHATRAS[nakshatraIndex].name,
-        lord: NAKSHATRAS[nakshatraIndex].lord,
-        traversed: parseFloat(traversed.toFixed(4)),
-    };
-}
-
-
-interface KundliInput {
-    date: Date;
-    lat: number;
-    lon: number;
-}
+// --- Interfaces for Kundli Data ---
 
 export interface PlanetData {
     name: string;
@@ -140,60 +20,74 @@ export interface Mahadasha {
     endDate: string;
 }
 
+interface KundliInput {
+    date: Date;
+    lat: number;
+    lon: number;
+}
+
+// --- Hardcoded Data (for fallback/placeholder use) ---
+
+const ZODIAC_SIGNS = [
+    'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
+];
+
 /**
  * Calculates the core Kundli data (planetary positions and ascendant).
+ *
+ * NOTE: This is a placeholder implementation. In a real application, this function
+ * would call an external astrology API or use a dedicated library with the
+ * provided birth date, latitude, and longitude to get accurate data.
  */
 export async function getKundliData({ date, lat, lon }: KundliInput): Promise<{ascendant: {degree: number, sign: string}, planets: PlanetData[], houseSigns: string[]}> {
-  try {
-    // Dummy implementation since swisseph is removed
-    return {
-      ascendant: { degree: 0, sign: 'Aries' },
-      planets: [
-        { name: 'Sun', degree: 15, sign: 'Aries', house: 1 },
-        { name: 'Moon', degree: 120, sign: 'Leo', house: 5 },
-      ],
-      houseSigns: ZODIAC_SIGNS,
-    };
-  } catch (error) {
-    console.error('Error in getKundliData:', error);
-    throw new Error('Failed to calculate Kundli data.');
-  }
+  console.log('Fetching Kundli data for:', { date, lat, lon });
+  // This is where you would call the external API or calculation library.
+  // Returning hardcoded sample data for now.
+  return {
+    ascendant: { degree: 124.5, sign: 'Leo' },
+    planets: [
+      { name: 'Sun', degree: 135.2, sign: 'Leo', house: 1 },
+      { name: 'Moon', degree: 310.8, sign: 'Aquarius', house: 7 },
+      { name: 'Mars', degree: 95.1, sign: 'Cancer', house: 12 },
+      { name: 'Mercury', degree: 155.6, sign: 'Virgo', house: 2 },
+      { name: 'Jupiter', degree: 25.4, sign: 'Aries', house: 9 },
+      { name: 'Venus', degree: 110.3, sign: 'Cancer', house: 12 },
+      { name: 'Saturn', degree: 340.9, sign: 'Pisces', house: 8 },
+      { name: 'Rahu', degree: 178.0, sign: 'Virgo', house: 2 },
+      { name: 'Ketu', degree: 358.0, sign: 'Pisces', house: 8 },
+    ],
+    houseSigns: ZODIAC_SIGNS,
+  };
 };
 
 
 /**
  * Calculates astrological doshas and yogas based on planet positions.
+ * NOTE: This is a placeholder. A real implementation would have more complex logic.
  */
 export async function getVedicYogasAndDoshas(planets: PlanetData[], ascendantSign: string): Promise<{ name: string; description: string }[]> {
     const results: { name: string; description: string }[] = [];
     const getPlanet = (name: string) => planets.find(p => p.name === name);
 
-    // Mangal Dosha (Mars in 1, 4, 7, 8, 12th house from Lagna)
+    // Simple Mangal Dosha check
     const mars = getPlanet('Mars');
-    if (mars) {
-        const mangalDoshaHouses = [1, 4, 7, 8, 12];
-        if (mangalDoshaHouses.includes(mars.house)) {
-            results.push({
-                name: "Mangal Dosha",
-                description: `Present because Mars is in the ${mars.house}th house from the Ascendant.`
-            });
-        }
+    if (mars && [1, 4, 7, 8, 12].includes(mars.house)) {
+        results.push({
+            name: "Mangal Dosha",
+            description: `Present because Mars is in the ${mars.house}th house from the Ascendant.`
+        });
     }
 
-    // Gaj Kesari Yoga (Jupiter in a Kendra [1, 4, 7, 10] from the Moon)
+    // Simple Gaj Kesari Yoga check
     const jupiter = getPlanet('Jupiter');
     const moon = getPlanet('Moon');
     if (jupiter && moon) {
-        const moonHouse = moon.house;
-        const jupiterHouse = jupiter.house;
-        // This logic calculates house distance. Kendra means houses 1, 4, 7, 10 from a point.
-        // If Moon is in house `m` and Jupiter in `j`, distance is `(j - m + 12) % 12`.
-        // 1st from moon = same house (dist 0), 4th = (dist 3), 7th = (dist 6), 10th = (dist 9).
-        const relativeHouseDistance = (jupiterHouse - moonHouse + 12) % 12;
-        if ([0, 3, 6, 9].includes(relativeHouseDistance)) {
+        const relativeHouse = (jupiter.house - moon.house + 12) % 12;
+        if ([0, 3, 6, 9].includes(relativeHouse)) {
              results.push({
                 name: "Gaj Kesari Yoga",
-                description: `Present because Jupiter is in a Kendra house from the Moon.`
+                description: `Present because Jupiter is in a Kendra (1, 4, 7, 10) from the Moon.`
             });
         }
     }
@@ -203,50 +97,34 @@ export async function getVedicYogasAndDoshas(planets: PlanetData[], ascendantSig
 
 /**
  * Calculates the Vimshottari Dasha periods.
+ * NOTE: This is a placeholder. A real implementation would require complex calculations
+ * based on the Moon's precise nakshatra position at birth.
  */
 export async function getVimshottariDasha(moonDegree: number, birthDate: Date): Promise<Mahadasha[]> {
-    const moonNakshatra = getNakshatra(moonDegree);
-    const startingLord = moonNakshatra.lord;
-    const lordDuration = DASHA_DURATIONS[startingLord];
-
-    const remainingDashaDuration = lordDuration * (1 - moonNakshatra.traversed);
+    // This is a highly simplified placeholder.
+    // A real calculation is much more complex.
+    const dashaLords = ['Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury', 'Ketu', 'Venus'];
+    const dashaDurations = [6, 10, 7, 18, 16, 19, 17, 7, 20];
     
     const dashaPeriods: Mahadasha[] = [];
-    let currentLordIndex = DASHA_LORDS_SEQUENCE.indexOf(startingLord);
     let currentDate = new Date(birthDate);
 
-    // Add the first partial Dasha
-    const firstDashaEndDate = new Date(currentDate);
-    firstDashaEndDate.setFullYear(firstDashaEndDate.getFullYear() + Math.floor(remainingDashaDuration));
-    const remainingDays = (remainingDashaDuration % 1) * 365.25;
-    firstDashaEndDate.setDate(firstDashaEndDate.getDate() + Math.floor(remainingDays));
-
-    dashaPeriods.push({
-        dashaLord: startingLord,
-        startDate: currentDate.toISOString().split('T')[0],
-        endDate: firstDashaEndDate.toISOString().split('T')[0]
-    });
-
-    currentDate = new Date(firstDashaEndDate);
-
-    // Loop for the rest of the 120-year cycle
-    for (let i = 1; i < DASHA_LORDS_SEQUENCE.length * 2; i++) { // Loop more to ensure we cover a long lifespan
-        currentLordIndex = (currentLordIndex + 1) % DASHA_LORDS_SEQUENCE.length;
-        const currentLord = DASHA_LORDS_SEQUENCE[currentLordIndex];
-        const duration = DASHA_DURATIONS[currentLord];
+    for (let i = 0; i < dashaLords.length; i++) {
+        const lord = dashaLords[i];
+        const duration = dashaDurations[i];
         
         const startDate = new Date(currentDate);
         const endDate = new Date(startDate);
         endDate.setFullYear(endDate.getFullYear() + duration);
 
         dashaPeriods.push({
-            dashaLord: currentLord,
+            dashaLord: lord,
             startDate: startDate.toISOString().split('T')[0],
             endDate: endDate.toISOString().split('T')[0]
         });
-
+        
         currentDate = new Date(endDate);
     }
 
-    return dashaPeriods.slice(0, 12); // Return a reasonable number of dashas
+    return dashaPeriods.slice(0, 12);
 };

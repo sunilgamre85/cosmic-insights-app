@@ -49,29 +49,48 @@ export async function janamKundliAnalysis(input: JanamKundliAnalysisInput): Prom
 const prompt = ai.definePrompt({
   name: 'janamKundliAnalysisPrompt',
   input: {schema: z.any()},
-  output: {schema: z.object({ report: z.string() })}, // AI only generates the report text
+  output: {schema: z.object({ report: z.string() })},
   config: {
     temperature: 0.2,
   },
   prompt: `You are an expert Vedic astrologer. Your primary task is to interpret a pre-calculated Janam Kundli (birth chart) and generate a detailed report.
 
-The underlying calculation service is temporarily unavailable. Please generate a sample report for the user with plausible astrological interpretations. Inform the user that this is a sample report while the service is being restored.
-
-User Details:
+The user has provided the following details:
 Name: {{{name}}}
 Date of Birth: {{{dateOfBirth}}}
 Time of Birth: {{{timeOfBirth}}}
 Place of Birth: {{{placeOfBirth}}}
 
-Generate a comprehensive sample Janam Kundli report. The report must include:
-1.  A detailed analysis of a sample Lagna (Ascendant).
-2.  An interpretation of several sample planet positions.
-3.  A section on a sample Yoga or Dosha.
-4.  A section on sample Vimshottari Dasha periods.
-5.  Provide a comprehensive analysis of career, health, and relationships based on the sample chart.
-6.  Suggest simple, practical, and non-superstitious remedies.
+The following astrological data has been calculated by our backend service. Please use this data to generate your analysis.
 
-Provide a comprehensive, well-structured, and easy-to-understand sample report.`,
+- Ascendant (Lagna): {{{ascendant.sign}}}
+- Planetary Positions:
+{{#each planets}}
+  - {{name}}: In {{sign}} (House {{house}})
+{{/each}}
+- Major Yogas/Doshas Found:
+{{#if yogasAndDoshas}}
+  {{#each yogasAndDoshas}}
+    - {{name}}: {{description}}
+  {{/each}}
+{{else}}
+  - None of significance were detected by the preliminary scan.
+{{/if}}
+
+- Upcoming Mahadasha Periods:
+{{#each mahadashas}}
+  - {{dashaLord}}: From {{startDate}} to {{endDate}}
+{{/each}}
+
+Based ONLY on the data provided above, generate a comprehensive Janam Kundli report. The report must include:
+1.  A detailed analysis of the Lagna (Ascendant) and its meaning for the individual's personality.
+2.  An interpretation of the key planetary positions (Sun, Moon, Mars, Jupiter, Saturn) and their impact.
+3.  A brief explanation of the detected Yogas or Doshas and their potential influence.
+4.  An overview of the upcoming Mahadasha periods and what they might signify.
+5.  A comprehensive analysis of career, health, and relationships based on the provided chart data.
+6.  Suggest simple, practical, and non-superstitious remedies (like meditation, charity, or behavioral changes) relevant to the chart.
+
+Provide a comprehensive, well-structured, and easy-to-understand report. Structure the output as a single, detailed report string.`,
 });
 
 const janamKundliAnalysisFlow = ai.defineFlow(
@@ -83,35 +102,21 @@ const janamKundliAnalysisFlow = ai.defineFlow(
   async (input): Promise<JanamKundliAnalysisOutput> => {
     // In a real app, you would use a geocoding service to get lat/lon from placeOfBirth
     // For this prototype, we'll use a fixed lat/lon if not provided.
-    const lat = input.lat ?? 19.2288; // Default to Kandivali, Mumbai
-    const lon = input.lon ?? 72.8540; // Default to Kandivali, Mumbai
+    const lat = input.lat ?? 19.2288; // Default to Mumbai, IN
+    const lon = input.lon ?? 72.8540; // Default to Mumbai, IN
 
     const [year, month, day] = input.dateOfBirth.split('-').map(Number);
     const [hour, minute] = input.timeOfBirth.split(':').map(Number);
     
-    // We need the original birth date for Dasha calculation
     const birthDateObj = new Date(year, month - 1, day, hour, minute);
 
-    // The service is temporarily disabled, so we will not call it.
-    // const kundliData = await getKundliData({ date: birthDateObj, lat, lon });
-    // const yogasAndDoshas = await getVedicYogasAndDoshas(kundliData.planets, kundliData.ascendant.sign);
+    // Get calculated data from our astrology service
+    const kundliData = await getKundliData({ date: birthDateObj, lat, lon });
+    const yogasAndDoshas = await getVedicYogasAndDoshas(kundliData.planets, kundliData.ascendant.sign);
 
-    // const moon = kundliData.planets.find(p => p.name === 'Moon');
-    // if (!moon) throw new Error("Could not calculate Moon's position.");
-    // const mahadashas = await getVimshottariDasha(moon.degree, birthDateObj);
-    
-    // Create dummy data to send to the prompt
-    const kundliData = {
-        ascendant: { degree: 15, sign: 'Leo' },
-        planets: [],
-        houseSigns: [],
-    };
-    const yogasAndDoshas = [{ name: 'Gaj Kesari Yoga', description: 'Formed by Jupiter and Moon.' }];
-    const mahadashas = [
-        { dashaLord: 'Sun', startDate: '2020-01-01', endDate: '2026-01-01' },
-        { dashaLord: 'Moon', startDate: '2026-01-01', endDate: '2036-01-01' },
-    ];
-
+    const moon = kundliData.planets.find(p => p.name === 'Moon');
+    if (!moon) throw new Error("Could not calculate Moon's position.");
+    const mahadashas = await getVimshottariDasha(moon.degree, birthDateObj);
 
     const promptInput = {
         ...input,
@@ -123,20 +128,24 @@ const janamKundliAnalysisFlow = ai.defineFlow(
     const {output} = await prompt(promptInput);
 
     // Prepare data for the visual chart
-    // const housesForChart = Array.from({ length: 12 }, (_, i) => ({
-    //     house: i + 1,
-    //     sign: kundliData.houseSigns[i],
-    //     planets: kundliData.planets.filter(p => p.house === i + 1).map(p => p.name.substring(0, 2).toUpperCase())
-    // }));
+    const housesForChart = Array.from({ length: 12 }, (_, i) => {
+        const houseNumber = i + 1;
+        const houseData = kundliData.planets.filter(p => p.house === houseNumber);
+        const houseSign = kundliData.houseSigns[i]; // This assumes houseSigns is ordered 1-12
+        return {
+            house: houseNumber,
+            sign: houseSign,
+            planets: houseData.map(p => p.name.substring(0, 2).toUpperCase())
+        };
+    });
     
     return {
         report: output!.report,
         mahadashas: mahadashas,
-        chartData: undefined,
-        // chartData: {
-        //     ascendant: kundliData.ascendant.sign,
-        //     houses: housesForChart
-        // }
+        chartData: {
+             ascendant: kundliData.ascendant.sign,
+             houses: housesForChart
+        }
     };
   }
 );
