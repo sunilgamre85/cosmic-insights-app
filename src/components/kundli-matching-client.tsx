@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarIcon, Loader2, HeartHandshake, User, Users } from "lucide-react";
 import { kundliMatchingAnalysis, type KundliMatchingAnalysisOutput } from "@/ai/flows/kundli-matching-analysis";
 import { Separator } from "./ui/separator";
+import { ScrollArea } from "./ui/scroll-area";
 
 const personSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
@@ -193,13 +194,17 @@ export function KundliMatchingClient() {
             </div>
           )}
           {result && (
-            <div className="space-y-4 text-center">
-                <h3 className="font-headline text-xl">Compatibility Score (Guna Milan)</h3>
-                <p className="text-5xl font-bold text-primary">{result.compatibilityScore}/36</p>
+            <div className="space-y-4">
+                <div className="text-center">
+                    <h3 className="font-headline text-xl">Compatibility Score (Guna Milan)</h3>
+                    <p className="text-5xl font-bold text-primary">{result.compatibilityScore}/36</p>
+                </div>
                 <Separator />
                 <div>
                   <h4 className="font-headline text-lg">Overall Summary</h4>
-                  <p className="text-base text-foreground/90">{result.summary}</p>
+                  <ScrollArea className="h-96 w-full rounded-md border p-4">
+                    <p className="text-base text-foreground/90 whitespace-pre-wrap">{result.summary}</p>
+                  </ScrollArea>
                 </div>
             </div>
           )}

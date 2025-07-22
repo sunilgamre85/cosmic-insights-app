@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarIcon, Loader2, Star } from "lucide-react";
 import { janamKundliAnalysis, type JanamKundliAnalysisOutput } from "@/ai/flows/janam-kundli-analysis";
-import { Textarea } from "./ui/textarea";
+import { ScrollArea } from "./ui/scroll-area";
 
 const formSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
@@ -188,13 +188,11 @@ export function JanamKundliClient() {
             </div>
           )}
           {result && (
-            <div className="space-y-4">
-                <Textarea
-                    readOnly
-                    className="w-full h-96 text-base"
-                    value={result.report}
-                />
-            </div>
+            <ScrollArea className="h-[500px] w-full rounded-md border p-4">
+                <div
+                    className="prose dark:prose-invert max-w-none text-base text-foreground/90 whitespace-pre-wrap"
+                >{result.report}</div>
+            </ScrollArea>
           )}
         </CardContent>
       </Card>
