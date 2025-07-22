@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,6 +18,7 @@ import { CalendarIcon, Loader2, HeartHandshake, User, Users } from "lucide-react
 import { kundliMatchingAnalysis, type KundliMatchingAnalysisOutput } from "@/ai/flows/kundli-matching-analysis";
 import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
+import { useUserInput } from "@/context/UserInputContext";
 
 const personSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
@@ -37,19 +38,45 @@ export function KundliMatchingClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<KundliMatchingAnalysisOutput | null>(null);
   const { toast } = useToast();
+  const { userDetails, setUserDetails } = useUserInput();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      person1: { name: "", timeOfBirth: "12:00", placeOfBirth: "" },
+      person1: { 
+        name: userDetails.name || "", 
+        dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
+        timeOfBirth: "12:00", 
+        placeOfBirth: "" 
+      },
       person2: { name: "", timeOfBirth: "12:00", placeOfBirth: "" },
     },
   });
+
+  useEffect(() => {
+    form.reset({
+      ...form.getValues(),
+      person1: {
+        ...form.getValues("person1"),
+        name: userDetails.name || "",
+        dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
+      },
+    });
+  }, [userDetails, form]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setResult(null);
     try {
+      // Save person 1's details if they seem to be the primary user
+      if (values.person1.name && values.person1.dateOfBirth) {
+        setUserDetails({
+            name: values.person1.name,
+            dateOfBirth: values.person1.dateOfBirth.toISOString(),
+        });
+      }
+      
       const analysisResult = await kundliMatchingAnalysis({
         person1: {
           ...values.person1,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,6 +20,7 @@ import { Separator } from "./ui/separator";
 import { Badge } from "./ui/badge";
 import { ScrollArea } from "./ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useUserInput } from "@/context/UserInputContext";
 
 const formSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
@@ -32,15 +33,31 @@ export function NumerologyClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AiNumerologyAnalysisOutput | null>(null);
   const { toast } = useToast();
+  const { userDetails, setUserDetails } = useUserInput();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: userDetails.name || "",
+      dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
+    },
   });
+
+  useEffect(() => {
+    form.reset({
+      name: userDetails.name || "",
+      dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
+    });
+  }, [userDetails, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setResult(null);
     try {
+      setUserDetails({
+        name: values.name,
+        dateOfBirth: values.dateOfBirth.toISOString(),
+      });
       const analysisResult = await aiNumerologyAnalysis({
         ...values,
         dateOfBirth: format(values.dateOfBirth, "yyyy-MM-dd"),

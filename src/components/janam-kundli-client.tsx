@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarIcon, Loader2, Star } from "lucide-react";
 import { janamKundliAnalysis, type JanamKundliAnalysisOutput } from "@/ai/flows/janam-kundli-analysis";
 import { ScrollArea } from "./ui/scroll-area";
+import { useUserInput } from "@/context/UserInputContext";
 
 const formSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
@@ -31,20 +32,35 @@ export function JanamKundliClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<JanamKundliAnalysisOutput | null>(null);
   const { toast } = useToast();
+  const { userDetails, setUserDetails } = useUserInput();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      name: userDetails.name || "",
+      dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
       timeOfBirth: "12:00",
       placeOfBirth: "",
     },
   });
 
+  useEffect(() => {
+    form.reset({
+      name: userDetails.name || "",
+      dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
+      timeOfBirth: form.getValues("timeOfBirth") || "12:00",
+      placeOfBirth: form.getValues("placeOfBirth") || "",
+    });
+  }, [userDetails, form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setResult(null);
     try {
+      setUserDetails({
+        name: values.name,
+        dateOfBirth: values.dateOfBirth.toISOString(),
+      });
       const analysisResult = await janamKundliAnalysis({
         ...values,
         dateOfBirth: format(values.dateOfBirth, "yyyy-MM-dd"),
