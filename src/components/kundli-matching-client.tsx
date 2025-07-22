@@ -19,13 +19,15 @@ import { kundliMatchingAnalysis, type KundliMatchingAnalysisOutput } from "@/ai/
 import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
 import { useUserInput } from "@/context/UserInputContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 const personSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
   dateOfBirth: z.date({
     required_error: "A date of birth is required.",
   }),
-  timeOfBirth: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Please enter a valid time (HH:MM)."),
+  hourOfBirth: z.string({ required_error: "Please select an hour." }),
+  minuteOfBirth: z.string({ required_error: "Please select a minute." }),
   placeOfBirth: z.string().min(2, "Please enter a valid place of birth."),
 });
 
@@ -48,10 +50,16 @@ export function KundliMatchingClient() {
       person1: { 
         name: userDetails.name || "", 
         dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
-        timeOfBirth: "12:00", 
+        hourOfBirth: "12",
+        minuteOfBirth: "00", 
         placeOfBirth: "" 
       },
-      person2: { name: "", timeOfBirth: "12:00", placeOfBirth: "" },
+      person2: { 
+        name: "",
+        hourOfBirth: "12", 
+        minuteOfBirth: "00",
+        placeOfBirth: "" 
+      },
     },
   });
 
@@ -83,10 +91,12 @@ export function KundliMatchingClient() {
         person1: {
           ...values.person1,
           dateOfBirth: format(values.person1.dateOfBirth, "yyyy-MM-dd"),
+          timeOfBirth: `${values.person1.hourOfBirth}:${values.person1.minuteOfBirth}`,
         },
         person2: {
           ...values.person2,
           dateOfBirth: format(values.person2.dateOfBirth, "yyyy-MM-dd"),
+          timeOfBirth: `${values.person2.hourOfBirth}:${values.person2.minuteOfBirth}`,
         },
       });
       setResult(analysisResult);
@@ -101,6 +111,9 @@ export function KundliMatchingClient() {
       setIsLoading(false);
     }
   }
+
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
   const renderPersonFields = (
     person: "person1" | "person2", 
@@ -160,19 +173,48 @@ export function KundliMatchingClient() {
           </FormItem>
         )}
       />
-      <FormField
-        control={form.control}
-        name={`${person}.timeOfBirth`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Time of Birth (24-hour)</FormLabel>
-            <FormControl>
-              <Input placeholder="e.g. 14:30" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name={`${person}.hourOfBirth`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Hour</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Hour" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {hours.map(hour => <SelectItem key={hour} value={hour}>{hour}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name={`${person}.minuteOfBirth`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Minute</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Minute" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {minutes.map(minute => <SelectItem key={minute} value={minute}>{minute}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
       <FormField
         control={form.control}
         name={`${person}.placeOfBirth`}

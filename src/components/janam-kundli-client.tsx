@@ -18,13 +18,15 @@ import { CalendarIcon, Loader2, Star } from "lucide-react";
 import { janamKundliAnalysis, type JanamKundliAnalysisOutput } from "@/ai/flows/janam-kundli-analysis";
 import { ScrollArea } from "./ui/scroll-area";
 import { useUserInput } from "@/context/UserInputContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 const formSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
   dateOfBirth: z.date({
     required_error: "A date of birth is required.",
   }),
-  timeOfBirth: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Please enter a valid time (HH:MM)."),
+  hourOfBirth: z.string({ required_error: "Please select an hour." }),
+  minuteOfBirth: z.string({ required_error: "Please select a minute." }),
   placeOfBirth: z.string().min(2, "Please enter a valid place of birth."),
 });
 
@@ -40,7 +42,8 @@ export function JanamKundliClient() {
     defaultValues: {
       name: userDetails.name || "",
       dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
-      timeOfBirth: "12:00",
+      hourOfBirth: "12",
+      minuteOfBirth: "00",
       placeOfBirth: "",
     },
   });
@@ -49,7 +52,8 @@ export function JanamKundliClient() {
     form.reset({
       name: userDetails.name || "",
       dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
-      timeOfBirth: form.getValues("timeOfBirth") || "12:00",
+      hourOfBirth: form.getValues("hourOfBirth") || "12",
+      minuteOfBirth: form.getValues("minuteOfBirth") || "00",
       placeOfBirth: form.getValues("placeOfBirth") || "",
     });
   }, [userDetails, form]);
@@ -63,8 +67,10 @@ export function JanamKundliClient() {
         dateOfBirth: values.dateOfBirth.toISOString(),
       });
       const analysisResult = await janamKundliAnalysis({
-        ...values,
+        name: values.name,
         dateOfBirth: format(values.dateOfBirth, "yyyy-MM-dd"),
+        timeOfBirth: `${values.hourOfBirth}:${values.minuteOfBirth}`,
+        placeOfBirth: values.placeOfBirth,
       });
       setResult(analysisResult);
     } catch (error) {
@@ -78,6 +84,9 @@ export function JanamKundliClient() {
       setIsLoading(false);
     }
   }
+
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
   return (
     <div className="grid md:grid-cols-2 gap-8">
@@ -149,19 +158,48 @@ export function JanamKundliClient() {
                   </FormItem>
                 )}
               />
-               <FormField
-                control={form.control}
-                name="timeOfBirth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Time of Birth (24-hour format)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. 14:30" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+               <div className="grid grid-cols-2 gap-4">
+                 <FormField
+                  control={form.control}
+                  name="hourOfBirth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hour of Birth</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Hour" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {hours.map(hour => <SelectItem key={hour} value={hour}>{hour}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="minuteOfBirth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Minute of Birth</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Minute" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {minutes.map(minute => <SelectItem key={minute} value={minute}>{minute}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+               </div>
                <FormField
                 control={form.control}
                 name="placeOfBirth"
