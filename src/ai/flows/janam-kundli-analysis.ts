@@ -15,7 +15,7 @@ const JanamKundliAnalysisInputSchema = z.object({
   name: z.string().describe('The name of the person.'),
   dateOfBirth: z.string().describe('The date of birth of the person (YYYY-MM-DD).'),
   timeOfBirth: z.string().describe('The time of birth of the person (HH:MM).'),
-  placeOfBirth: z.string().describe('The place of birth of the person (City, Country).'),
+  placeOfBirth: z.string().describe('The place of birth of the person (e.g., city, region, country).'),
 });
 export type JanamKundliAnalysisInput = z.infer<typeof JanamKundliAnalysisInputSchema>;
 
@@ -23,6 +23,24 @@ const JanamKundliAnalysisOutputSchema = z.object({
     report: z.string().describe('A detailed Janam Kundli report including planetary positions, Lagna, Nakshatra, Dasha periods, and their significance.')
 });
 export type JanamKundliAnalysisOutput = z.infer<typeof JanamKundliAnalysisOutputSchema>;
+
+const locationTool = ai.defineTool(
+    {
+      name: 'findLocation',
+      description: 'Find the exact location (city, state, country) for a given place name.',
+      inputSchema: z.object({ place: z.string() }),
+      outputSchema: z.object({ city: z.string(), state: z.string(), country: z.string() }),
+    },
+    async (input) => {
+      // In a real application, this would call a Geocoding API.
+      // For this prototype, we'll simulate it.
+      if (input.place.toLowerCase().includes('kandivali')) {
+        return { city: 'Mumbai', state: 'Maharashtra', country: 'India' };
+      }
+      return { city: input.place, state: '', country: '' };
+    }
+);
+
 
 export async function janamKundliAnalysis(input: JanamKundliAnalysisInput): Promise<JanamKundliAnalysisOutput> {
   return janamKundliAnalysisFlow(input);
@@ -32,10 +50,13 @@ const prompt = ai.definePrompt({
   name: 'janamKundliAnalysisPrompt',
   input: {schema: JanamKundliAnalysisInputSchema},
   output: {schema: JanamKundliAnalysisOutputSchema},
+  tools: [locationTool],
   config: {
     temperature: 0,
   },
-  prompt: `You are an expert Vedic astrologer. Generate a detailed Janam Kundli (birth chart) report based on the provided details.
+  prompt: `You are an expert Vedic astrologer. A user has provided their birth details. Your first step is to use the findLocation tool to determine the precise city, state, and country from the user's provided place of birth. This is essential for accurate astrological calculations.
+
+Once you have the precise location, generate a detailed Janam Kundli (birth chart) report.
 
 Name: {{{name}}}
 Date of Birth: {{{dateOfBirth}}}

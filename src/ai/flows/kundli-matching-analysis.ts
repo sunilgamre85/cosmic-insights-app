@@ -15,7 +15,7 @@ const PersonDetailsSchema = z.object({
   name: z.string().describe('The name of the person.'),
   dateOfBirth: z.string().describe('The date of birth of the person (YYYY-MM-DD).'),
   timeOfBirth: z.string().describe('The time of birth of the person (HH:MM).'),
-  placeOfBirth: z.string().describe('The place of birth of the person (City, Country).'),
+  placeOfBirth: z.string().describe('The place of birth of the person (e.g., city, region, country).'),
 });
 
 const KundliMatchingAnalysisInputSchema = z.object({
@@ -30,6 +30,23 @@ const KundliMatchingAnalysisOutputSchema = z.object({
 });
 export type KundliMatchingAnalysisOutput = z.infer<typeof KundliMatchingAnalysisOutputSchema>;
 
+const locationTool = ai.defineTool(
+    {
+      name: 'findLocation',
+      description: 'Find the exact location (city, state, country) for a given place name.',
+      inputSchema: z.object({ place: z.string() }),
+      outputSchema: z.object({ city: z.string(), state: z.string(), country: z.string() }),
+    },
+    async (input) => {
+      // In a real application, this would call a Geocoding API.
+      // For this prototype, we'll simulate it.
+      if (input.place.toLowerCase().includes('kandivali')) {
+        return { city: 'Mumbai', state: 'Maharashtra', country: 'India' };
+      }
+      return { city: input.place, state: '', country: '' };
+    }
+);
+
 export async function kundliMatchingAnalysis(input: KundliMatchingAnalysisInput): Promise<KundliMatchingAnalysisOutput> {
   return kundliMatchingAnalysisFlow(input);
 }
@@ -38,10 +55,13 @@ const prompt = ai.definePrompt({
   name: 'kundliMatchingAnalysisPrompt',
   input: {schema: KundliMatchingAnalysisInputSchema},
   output: {schema: KundliMatchingAnalysisOutputSchema},
+  tools: [locationTool],
   config: {
     temperature: 0,
   },
   prompt: `You are an expert Vedic astrologer specializing in Kundli Matching (Ashtakoot Milan) for marriage compatibility.
+
+Your first step is to use the findLocation tool for EACH person to determine their precise city, state, and country from their provided place of birth. This is essential for accurate astrological calculations.
 
 Analyze the birth details of the two individuals provided below.
 
