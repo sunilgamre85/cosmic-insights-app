@@ -62,9 +62,9 @@ const CombinedReportSchema = z.object({
 });
 
 const AnalyzePalmsOutputSchema = z.object({
-  leftHandAnalysis: SinglePalmAnalysisSchema.optional().describe("The detailed analysis for the left hand, representing potential and innate traits."),
-  rightHandAnalysis: SinglePalmAnalysisSchema.optional().describe("The detailed analysis for the right hand, representing actions and current life path."),
-  combinedReport: CombinedReportSchema.optional().describe("A synthesized, structured report comparing and contrasting the two hands to provide a complete, holistic reading. This is only generated if both hands are provided."),
+  leftHandAnalysis: SinglePalmAnalysisSchema.nullable().describe("The detailed analysis for the left hand. MUST be null if the left hand photo is not provided."),
+  rightHandAnalysis: SinglePalmAnalysisSchema.nullable().describe("The detailed analysis for the right hand. MUST be null if the right hand photo is not provided."),
+  combinedReport: CombinedReportSchema.optional().describe("A synthesized, structured report based on the provided hand(s)."),
   error: z.string().optional().describe('An error message if the palms could not be analyzed.'),
 });
 export type AnalyzePalmsOutput = z.infer<typeof AnalyzePalmsOutputSchema>;
@@ -89,10 +89,9 @@ The user has provided the following images:
 Your analysis must be comprehensive. Please perform the following steps:
 
 PART 1: INDIVIDUAL HAND ANALYSIS
-- For EACH HAND provided, perform a full analysis.
-- If ONLY the left hand is provided, return your analysis in the 'leftHandAnalysis' field and leave 'rightHandAnalysis' empty.
-- If ONLY the right hand is provided, return your analysis in the 'rightHandAnalysis' field and leave 'leftHandAnalysis' empty.
-- If BOTH hands are provided, perform analysis for both and populate both fields.
+- If ONLY the left hand is provided, perform a full analysis for it and populate the 'leftHandAnalysis' field. The 'rightHandAnalysis' field MUST be null.
+- If ONLY the right hand is provided, perform a full analysis for it and populate the 'rightHandAnalysis' field. The 'leftHandAnalysis' field MUST be null.
+- If BOTH hands are provided, perform analysis for both and populate both 'leftHandAnalysis' and 'rightHandAnalysis' fields.
 
 For each hand, your analysis should include:
 1.  **Analyze General Features:**
@@ -107,22 +106,17 @@ For each hand, your analysis should include:
     *   Trace each line with enough points (e.g., 5-10) to capture its curve accurately.
 
 PART 2: FINAL REPORT
-{{#if leftHandPhoto}}{{#if rightHandPhoto}}
-**Create a Combined Report.** Compare and contrast the left hand (potential) with the right hand (action). Synthesize all the information into a holistic, structured report with these sections:
-- personalityTraits, loveAndRelationships, careerAndSuccess, healthAndVitality, warningsAndOpportunities.
-{{else}}
-**Create a Single Hand Report.** Provide a summary report based on the single hand provided. Structure the report into these sections:
-- personalityTraits, loveAndRelationships, careerAndSuccess, healthAndVitality, warningsAndOpportunities.
-{{/if}}{{else}}
-**Create a Single Hand Report.** Provide a summary report based on the single hand provided. Structure the report into these sections:
-- personalityTraits, loveAndRelationships, careerAndSuccess, healthAndVitality, warningsAndOpportunities.
-{{/if}}
+- Create a 'combinedReport' based on the hand(s) provided.
+- If both hands are present, compare and contrast the left hand (potential) with the right hand (action).
+- If only one hand is present, base the report on that single hand.
+- Synthesize all the information into a holistic, structured report with these sections:
+  - personalityTraits, loveAndRelationships, careerAndSuccess, healthAndVitality, warningsAndOpportunities.
 
 PART 3: ERROR HANDLING
 *   If an image is unclear, set the 'error' field with a helpful message. Do not attempt to analyze an unclear hand.
 *   If no images are provided, set the 'error' field to "No palm images were provided for analysis."
 
-Return the full analysis in the requested JSON format.`,
+Return the full analysis in the requested JSON format, strictly adhering to the output schema.`,
 });
 
 const analyzePalmsFlow = ai.defineFlow(
