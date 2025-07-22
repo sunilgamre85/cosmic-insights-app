@@ -12,6 +12,7 @@ import Image from "next/image";
 import { analyzeFace, type AnalyzeFaceOutput } from "@/ai/flows/ai-face-reading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Separator } from "./ui/separator";
 
 export function FaceReadingClient() {
   const [file, setFile] = useState<File | null>(null);
@@ -243,5 +244,3 @@ export function FaceReadingClient() {
     </div>
   );
 }
-
-    
