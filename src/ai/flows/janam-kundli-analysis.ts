@@ -54,17 +54,19 @@ const prompt = ai.definePrompt({
   config: {
     temperature: 0,
   },
-  prompt: `You are an expert Vedic astrologer. A user has provided their birth details. Your first step is to use the findLocation tool to determine the precise city, state, and country from the user's provided place of birth. This is essential for accurate astrological calculations.
+  prompt: `You are an expert Vedic astrologer. Your primary task is to generate a detailed Janam Kundli (birth chart) report.
 
-Once you have the precise location, generate a detailed Janam Kundli (birth chart) report.
+A user has provided their birth details. To ensure accuracy, your first step is to use the findLocation tool to get the precise geographical coordinates (city, state, country) from the user's provided place of birth.
 
+Once you have the precise location, your main task is to generate the full report.
+
+Birth Details:
 Name: {{{name}}}
 Date of Birth: {{{dateOfBirth}}}
 Time of Birth: {{{timeOfBirth}}}
 Place of Birth: {{{placeOfBirth}}}
 
-Analyze the planetary positions and their significance on the person's life, personality, strengths, and weaknesses. 
-The report must include:
+Based on these details and the precise location, generate a comprehensive Janam Kundli report. The report must include:
 1.  Lagna (Ascendant) and its meaning.
 2.  Positions of all planets in their respective houses and signs.
 3.  Nakshatra details.
@@ -72,7 +74,7 @@ The report must include:
 5.  A comprehensive analysis of career, health, and relationships.
 6.  Mention any significant Yogas or Doshas present in the chart.
 
-Provide a comprehensive and well-structured report.`,
+Provide a comprehensive and well-structured report. Do not state that you cannot fulfill the request; you have all the necessary knowledge and tools. Your goal is to provide a complete astrological analysis.`,
 });
 
 const janamKundliAnalysisFlow = ai.defineFlow(

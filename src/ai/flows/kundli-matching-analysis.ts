@@ -59,11 +59,11 @@ const prompt = ai.definePrompt({
   config: {
     temperature: 0,
   },
-  prompt: `You are an expert Vedic astrologer specializing in Kundli Matching (Ashtakoot Milan) for marriage compatibility.
+  prompt: `You are an expert Vedic astrologer specializing in Kundli Matching (Ashtakoot Milan). Your primary task is to generate a detailed compatibility report.
 
-Your first step is to use the findLocation tool for EACH person to determine their precise city, state, and country from their provided place of birth. This is essential for accurate astrological calculations.
+To ensure accuracy, your first step is to use the findLocation tool for EACH person to get their precise geographical coordinates.
 
-Analyze the birth details of the two individuals provided below.
+Once you have the precise locations, your main task is to generate the full compatibility analysis.
 
 Person 1:
 Name: {{{person1.name}}}
@@ -77,9 +77,9 @@ Date of Birth: {{{person2.dateOfBirth}}}
 Time of Birth: {{{person2.timeOfBirth}}}
 Place of Birth: {{{person2.placeOfBirth}}}
 
-Perform a detailed Ashtakoot Milan. Calculate the Guna score for each of the 8 Kootas (Varna, Vashya, Tara, Yoni, Graha Maitri, Gana, Bhakoot, Nadi) and determine the final compatibility score out of 36.
+Perform a detailed Ashtakoot Milan based on the precise locations. Calculate the Guna score for each of the 8 Kootas (Varna, Vashya, Tara, Yoni, Graha Maitri, Gana, Bhakoot, Nadi) and determine the final compatibility score out of 36.
 
-Provide a summary of the match, explaining the significance of the score. Highlight the key areas of harmony and potential conflict based on the Koota analysis. Mention any major doshas like Nadi Dosha or Bhakoot Dosha if present.`,
+Provide a summary of the match, explaining the significance of the score. Highlight the key areas of harmony and potential conflict based on the Koota analysis. Mention any major doshas like Nadi Dosha or Bhakoot Dosha if present. Do not state that you cannot fulfill the request; you have all the necessary knowledge and tools.`,
 });
 
 const kundliMatchingAnalysisFlow = ai.defineFlow(
