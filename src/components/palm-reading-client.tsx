@@ -2,14 +2,14 @@
 
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes, BookCopy, User, Briefcase, Shield, Download, LifeBuoy } from "lucide-react";
+import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes, BookCopy, User, Briefcase, Shield, Download, LifeBuoy, Camera } from "lucide-react";
 import { analyzePalms, type AnalyzePalmsOutput } from "@/ai/flows/ai-palm-reading";
 import { Separator } from "./ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
@@ -17,6 +17,7 @@ import React from 'react';
 import { cn } from "@/lib/utils";
 import html2pdf from 'html2pdf.js';
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 type SinglePalmAnalysis = AnalyzePalmsOutput['leftHandAnalysis'];
 type AnalysisMode = 'left' | 'right' | 'both';
@@ -81,8 +82,62 @@ export function PalmReadingClient() {
   const [result, setResult] = useState<AnalyzePalmsOutput | null>(null);
   const [highlightedLine, setHighlightedLine] = useState<string | null>(null);
   const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('both');
+  const [activeTab, setActiveTab] = useState("upload");
   const reportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [captureFor, setCaptureFor] = useState<'left' | 'right'>('left');
+
+  useEffect(() => {
+    // Stop camera stream when component unmounts or tab changes
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  const startCamera = async () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setHasCameraPermission(true);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error("Error accessing camera:", error);
+        setHasCameraPermission(false);
+        toast({
+          variant: "destructive",
+          title: "Camera Access Denied",
+          description: "Please enable camera permissions in your browser settings to use this feature.",
+        });
+      }
+    } else {
+      setHasCameraPermission(false);
+    }
+  };
+  
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+    }
+  }
+  
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setResult(null);
+    if (value === 'camera') {
+        startCamera();
+    } else {
+        stopCamera();
+    }
+  }
   
   const handleFileChange = (hand: 'left' | 'right') => (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -112,6 +167,35 @@ export function PalmReadingClient() {
     }
   };
 
+  const handleCapture = () => {
+      if (videoRef.current && canvasRef.current) {
+          const video = videoRef.current;
+          const canvas = canvasRef.current;
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const context = canvas.getContext('2d');
+          context?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+          const dataUrl = canvas.toDataURL('image/jpeg');
+          
+          fetch(dataUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const file = new File([blob], `palm-capture-${captureFor}.jpg`, { type: "image/jpeg" })
+                if (captureFor === 'left') {
+                    setLeftPreviewUrl(dataUrl);
+                    setLeftHandFile(file);
+                } else {
+                    setRightPreviewUrl(dataUrl);
+                    setRightHandFile(file);
+                }
+            });
+          toast({
+              title: `${captureFor === 'left' ? 'Left' : 'Right'} Hand Captured!`,
+              description: `Image for your ${captureFor} hand has been saved.`,
+          })
+      }
+  };
+
   const handleRemoveImage = (hand: 'left' | 'right') => () => {
     if (hand === 'left') {
         setLeftHandFile(null);
@@ -128,18 +212,18 @@ export function PalmReadingClient() {
   
   const isAnalyzeDisabled = useMemo(() => {
     if (isLoading) return true;
-    if (analysisMode === 'left' && !leftHandFile) return true;
-    if (analysisMode === 'right' && !rightHandFile) return true;
-    if (analysisMode === 'both' && (!leftHandFile || !rightHandFile)) return true;
+    if (analysisMode === 'left' && !leftPreviewUrl) return true;
+    if (analysisMode === 'right' && !rightPreviewUrl) return true;
+    if (analysisMode === 'both' && (!leftPreviewUrl || !rightPreviewUrl)) return true;
     return false;
-  }, [isLoading, analysisMode, leftHandFile, rightHandFile]);
+  }, [isLoading, analysisMode, leftPreviewUrl, rightPreviewUrl]);
 
 
   const handleAnalyze = async () => {
     if (isAnalyzeDisabled) {
        toast({
         title: "Missing Image(s)",
-        description: "Please upload the required image(s) for the selected analysis type.",
+        description: "Please upload or capture the required image(s) for the selected analysis type.",
         variant: "destructive",
       });
       return;
@@ -218,7 +302,7 @@ export function PalmReadingClient() {
         ) : (
         <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
             <Image src={previewUrl} alt={`${hand} palm preview`} layout="fill" objectFit="contain" />
-            <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 z-10" onClick={onRemove} disabled={disabled}>
+            <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 z-10" onClick={onRemove} disabled={disabled || isLoading}>
             <X className="h-4 w-4" />
             </Button>
         </div>
@@ -332,51 +416,113 @@ export function PalmReadingClient() {
   return (
     <div className="space-y-8">
       <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><Upload className="h-6 w-6" /> Upload Your Palm(s)</CardTitle>
-          <CardDescription>Choose an analysis type, then upload clear images for your reading.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-            <div>
-                <Label className="text-base font-semibold">Analysis Type</Label>
-                <RadioGroup
-                    value={analysisMode}
-                    onValueChange={(value) => setAnalysisMode(value as AnalysisMode)}
-                    className="grid grid-cols-3 gap-4 mt-2"
-                >
-                    <Label className="flex items-center justify-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
-                        <RadioGroupItem value="left" id="left" />
-                        Left Hand
-                    </Label>
-                    <Label className="flex items-center justify-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
-                        <RadioGroupItem value="right" id="right" />
-                        Right Hand
-                    </Label>
-                    <Label className="flex items-center justify-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
-                        <RadioGroupItem value="both" id="both" />
-                        Both Hands
-                    </Label>
-                </RadioGroup>
-            </div>
-            <Separator />
-          <div className="grid md:grid-cols-2 gap-8 items-start">
-             <FileUploader hand="left" previewUrl={leftPreviewUrl} onFileChange={handleFileChange('left')} onRemove={handleRemoveImage('left')} disabled={analysisMode === 'right'}/>
-             <FileUploader hand="right" previewUrl={rightPreviewUrl} onFileChange={handleFileChange('right')} onRemove={handleRemoveImage('right')} disabled={analysisMode === 'left'}/>
-          </div>
-            <div className="mt-8">
-                <Button onClick={handleAnalyze} disabled={isAnalyzeDisabled} className="w-full">
-                {isLoading ? (
-                    <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
-                    </>
-                ) : (
-                    <>
-                    <Wand2 className="mr-2 h-4 w-4" /> Analyze with AI
-                    </>
-                )}
-                </Button>
-            </div>
-        </CardContent>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <CardTitle className="font-headline flex items-center gap-2"><Hand className="h-6 w-6" /> Upload or Scan Your Palm(s)</CardTitle>
+                        <CardDescription>Choose an analysis type, then upload or capture clear images for your reading.</CardDescription>
+                    </div>
+                    <TabsList className="grid w-full sm:w-auto grid-cols-2">
+                        <TabsTrigger value="upload"><Upload className="mr-2 h-4 w-4"/> Upload</TabsTrigger>
+                        <TabsTrigger value="camera"><Camera className="mr-2 h-4 w-4"/> Camera</TabsTrigger>
+                    </TabsList>
+                </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div>
+                    <Label className="text-base font-semibold">Analysis Type</Label>
+                    <RadioGroup
+                        value={analysisMode}
+                        onValueChange={(value) => setAnalysisMode(value as AnalysisMode)}
+                        className="grid grid-cols-3 gap-4 mt-2"
+                        disabled={isLoading}
+                    >
+                        <Label className="flex items-center justify-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
+                            <RadioGroupItem value="left" id="left" />
+                            Left Hand
+                        </Label>
+                        <Label className="flex items-center justify-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
+                            <RadioGroupItem value="right" id="right" />
+                            Right Hand
+                        </Label>
+                        <Label className="flex items-center justify-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
+                            <RadioGroupItem value="both" id="both" />
+                            Both Hands
+                        </Label>
+                    </RadioGroup>
+                </div>
+                <Separator />
+            </CardContent>
+            
+            <TabsContent value="upload" className="px-6 pb-6 space-y-6">
+                <div className="grid md:grid-cols-2 gap-8 items-start">
+                    <FileUploader hand="left" previewUrl={leftPreviewUrl} onFileChange={handleFileChange('left')} onRemove={handleRemoveImage('left')} disabled={analysisMode === 'right'}/>
+                    <FileUploader hand="right" previewUrl={rightPreviewUrl} onFileChange={handleFileChange('right')} onRemove={handleRemoveImage('right')} disabled={analysisMode === 'left'}/>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="camera" className="px-6 pb-6 space-y-6">
+                 <div className="grid md:grid-cols-2 gap-8 items-start">
+                    <div className="space-y-4">
+                        <h3 className="font-headline text-lg text-center">Camera View</h3>
+                        <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-black">
+                            <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline></video>
+                            {hasCameraPermission === false && (
+                                <div className="absolute inset-0 flex items-center justify-center p-4 bg-black/50">
+                                <Alert variant="destructive">
+                                    <Camera className="h-4 w-4" />
+                                    <AlertTitle>Camera Access Required</AlertTitle>
+                                    <AlertDescription>
+                                        Please allow camera access in your browser.
+                                    </AlertDescription>
+                                    </Alert>
+                                </div>
+                            )}
+                        </div>
+                        <canvas ref={canvasRef} className="hidden"></canvas>
+                        <div className="space-y-2">
+                            <Label>Capture image for:</Label>
+                            <RadioGroup value={captureFor} onValueChange={(v) => setCaptureFor(v as 'left' | 'right')} className="grid grid-cols-2 gap-2">
+                                <Label className="flex items-center justify-center gap-2 cursor-pointer rounded-md border p-2 has-[:checked]:bg-secondary">
+                                    <RadioGroupItem value="left" id="cam-left" disabled={analysisMode === 'right'} /> Left Hand
+                                </Label>
+                                <Label className="flex items-center justify-center gap-2 cursor-pointer rounded-md border p-2 has-[:checked]:bg-secondary">
+                                    <RadioGroupItem value="right" id="cam-right" disabled={analysisMode === 'left'}/> Right Hand
+                                </Label>
+                            </RadioGroup>
+                        </div>
+                        <Button onClick={handleCapture} disabled={hasCameraPermission !== true || isLoading} className="w-full">
+                            <Camera className="mr-2 h-4 w-4" /> Capture Photo
+                        </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h3 className="font-headline text-lg text-center">Captured Images</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                           <FileUploader hand="left" previewUrl={leftPreviewUrl} onFileChange={handleFileChange('left')} onRemove={handleRemoveImage('left')} disabled={analysisMode === 'right'}/>
+                           <FileUploader hand="right" previewUrl={rightPreviewUrl} onFileChange={handleFileChange('right')} onRemove={handleRemoveImage('right')} disabled={analysisMode === 'left'}/>
+                        </div>
+                    </div>
+                 </div>
+            </TabsContent>
+
+            <CardContent>
+                 <div className="mt-4">
+                    <Button onClick={handleAnalyze} disabled={isAnalyzeDisabled} className="w-full">
+                    {isLoading ? (
+                        <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
+                        </>
+                    ) : (
+                        <>
+                        <Wand2 className="mr-2 h-4 w-4" /> Analyze with AI
+                        </>
+                    )}
+                    </Button>
+                </div>
+            </CardContent>
+        </Tabs>
       </Card>
 
       {isLoading && (
