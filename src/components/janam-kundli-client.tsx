@@ -44,7 +44,7 @@ export function JanamKundliClient() {
       dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
       hourOfBirth: "12",
       minuteOfBirth: "00",
-      placeOfBirth: "",
+      placeOfBirth: "London, UK",
     },
   });
 
@@ -54,7 +54,7 @@ export function JanamKundliClient() {
       dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
       hourOfBirth: form.getValues("hourOfBirth") || "12",
       minuteOfBirth: form.getValues("minuteOfBirth") || "00",
-      placeOfBirth: form.getValues("placeOfBirth") || "",
+      placeOfBirth: form.getValues("placeOfBirth") || "London, UK",
     });
   }, [userDetails, form]);
 

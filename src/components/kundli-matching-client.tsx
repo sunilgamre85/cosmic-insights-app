@@ -52,13 +52,13 @@ export function KundliMatchingClient() {
         dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
         hourOfBirth: "12",
         minuteOfBirth: "00", 
-        placeOfBirth: "" 
+        placeOfBirth: "London, UK" 
       },
       person2: { 
         name: "",
         hourOfBirth: "12", 
         minuteOfBirth: "00",
-        placeOfBirth: "" 
+        placeOfBirth: "New York, USA" 
       },
     },
   });
@@ -119,7 +119,8 @@ export function KundliMatchingClient() {
     person: "person1" | "person2", 
     title: string, 
     isCalendarOpen: boolean, 
-    setCalendarOpen: (open: boolean) => void
+    setCalendarOpen: (open: boolean) => void,
+    defaultPlace: string
   ) => (
     <div className="space-y-4">
       <h3 className="font-headline text-lg flex items-center gap-2"><User /> {title}</h3>
@@ -222,7 +223,7 @@ export function KundliMatchingClient() {
           <FormItem>
             <FormLabel>Place of Birth</FormLabel>
             <FormControl>
-              <Input placeholder="e.g. London, UK" {...field} />
+              <Input placeholder={defaultPlace} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -242,8 +243,8 @@ export function KundliMatchingClient() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="grid md:grid-cols-2 gap-8">
-                {renderPersonFields("person1", "Person 1", person1CalendarOpen, setPerson1CalendarOpen)}
-                {renderPersonFields("person2", "Person 2", person2CalendarOpen, setPerson2CalendarOpen)}
+                {renderPersonFields("person1", "Person 1", person1CalendarOpen, setPerson1CalendarOpen, "e.g. London, UK")}
+                {renderPersonFields("person2", "Person 2", person2CalendarOpen, setPerson2CalendarOpen, "e.g. New York, USA")}
               </div>
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? (

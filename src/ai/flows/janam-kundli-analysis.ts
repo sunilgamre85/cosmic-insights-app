@@ -36,7 +36,7 @@ const prompt = ai.definePrompt({
   input: {schema: z.any()},
   output: {schema: JanamKundliAnalysisOutputSchema},
   config: {
-    temperature: 0,
+    temperature: 0.2,
   },
   prompt: `You are an expert Vedic astrologer. Your primary task is to interpret a pre-calculated Janam Kundli (birth chart) and generate a detailed report.
 
@@ -79,7 +79,7 @@ const janamKundliAnalysisFlow = ai.defineFlow(
 
     const [year, month, day] = input.dateOfBirth.split('-').map(Number);
     const [hour, minute] = input.timeOfBirth.split(':').map(Number);
-    const date = new Date(year, month - 1, day, hour, minute);
+    const date = new Date(Date.UTC(year, month - 1, day, hour, minute));
 
     const kundliData = await getKundliData({ date, lat, lon });
 

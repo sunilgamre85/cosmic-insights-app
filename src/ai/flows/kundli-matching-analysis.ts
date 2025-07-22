@@ -57,7 +57,7 @@ const prompt = ai.definePrompt({
   output: {schema: KundliMatchingAnalysisOutputSchema},
   tools: [locationTool],
   config: {
-    temperature: 0,
+    temperature: 0.2,
   },
   prompt: `You are an expert Vedic astrologer specializing in Kundli Matching (Ashtakoot Milan). Your primary task is to generate a detailed compatibility report.
 
