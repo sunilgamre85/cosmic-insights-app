@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef, useMemo } from "react";
@@ -49,6 +50,18 @@ const lineTextColors = {
     healthLine: 'text-green-500',
     marriageLine: 'text-orange-500',
 };
+
+const LeftHandOutline = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-muted-foreground">
+        <path d="M18 18.5a4 4 0 0 1-4 0 4 4 0 0 1-4 0 4 4 0 0 1-4 0 4 4 0 0 1-4 0V14a2 2 0 0 1 2-2h1.5a2 2 0 0 1 2 2v1.5a2 2 0 0 0 2 2v-4.5a2 2 0 0 0-2-2v-1.5a2 2 0 1 0-4 0V10a2 2 0 0 0-2 2v1.5a2 2 0 0 0-2 2V12a2 2 0 0 0-2-2V7a2 2 0 1 1 4 0v3a2 2 0 0 0 2 2h1.5a2 2 0 0 0 2-2V8.5a2 2 0 1 0-4 0V10a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2v-5.5a2 2 0 0 0-2-2V6a2 2 0 1 0-4 0v.5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2V5a2 2 0 1 0-4 0v1.5a2 2 0 0 0-2 2v7.5a4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0 4-4 4 4 0 0 0 4-4V8a2 2 0 1 1 4 0v10.5a4 4 0 0 1-4 4 4 4 0 0 1-4-4Z"/>
+    </svg>
+);
+
+const RightHandOutline = () => (
+     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-muted-foreground -scale-x-100">
+        <path d="M18 18.5a4 4 0 0 1-4 0 4 4 0 0 1-4 0 4 4 0 0 1-4 0 4 4 0 0 1-4 0V14a2 2 0 0 1 2-2h1.5a2 2 0 0 1 2 2v1.5a2 2 0 0 0 2 2v-4.5a2 2 0 0 0-2-2v-1.5a2 2 0 1 0-4 0V10a2 2 0 0 0-2 2v1.5a2 2 0 0 0-2 2V12a2 2 0 0 0-2-2V7a2 2 0 1 1 4 0v3a2 2 0 0 0 2 2h1.5a2 2 0 0 0 2-2V8.5a2 2 0 1 0-4 0V10a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2v-5.5a2 2 0 0 0-2-2V6a2 2 0 1 0-4 0v.5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2V5a2 2 0 1 0-4 0v1.5a2 2 0 0 0-2 2v7.5a4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0 4-4 4 4 0 0 0 4-4V8a2 2 0 1 1 4 0v10.5a4 4 0 0 1-4 4 4 4 0 0 1-4-4Z"/>
+    </svg>
+);
 
 
 export function PalmReadingClient() {
@@ -133,7 +146,18 @@ export function PalmReadingClient() {
             leftHandPhoto: analysisMode !== 'right' ? leftPreviewUrl! : undefined,
             rightHandPhoto: analysisMode !== 'left' ? rightPreviewUrl! : undefined,
         });
-        setResult(analysisResult);
+        
+        if (analysisResult.error) {
+            toast({
+                title: 'Analysis Error',
+                description: analysisResult.error,
+                variant: 'destructive',
+            });
+            setResult(null);
+        } else {
+            setResult(analysisResult);
+        }
+
     } catch (error) {
       console.error("Analysis failed:", error);
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
@@ -175,8 +199,8 @@ export function PalmReadingClient() {
             className={cn("flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary transition-colors", disabled && "cursor-not-allowed")}
         >
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-            <FileImage className="w-10 h-10 mb-3 text-muted-foreground" />
-            <p className="mb-2 text-sm text-muted-foreground">
+            {hand === 'left' ? <LeftHandOutline /> : <RightHandOutline />}
+            <p className="mt-2 text-sm text-muted-foreground">
                 <span className="font-semibold">Click to upload</span> or drag and drop
             </p>
             <p className="text-xs text-muted-foreground">PNG, JPG or WEBP (MAX. 4MB)</p>
@@ -312,15 +336,15 @@ export function PalmReadingClient() {
                     onValueChange={(value) => setAnalysisMode(value as AnalysisMode)}
                     className="grid grid-cols-3 gap-4 mt-2"
                 >
-                    <Label className="flex items-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
+                    <Label className="flex items-center justify-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
                         <RadioGroupItem value="left" id="left" />
                         Left Hand
                     </Label>
-                    <Label className="flex items-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
+                    <Label className="flex items-center justify-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
                         <RadioGroupItem value="right" id="right" />
                         Right Hand
                     </Label>
-                    <Label className="flex items-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
+                    <Label className="flex items-center justify-center gap-2 cursor-pointer rounded-md border p-4 hover:bg-accent hover:text-accent-foreground has-[:checked]:bg-primary has-[:checked]:text-primary-foreground">
                         <RadioGroupItem value="both" id="both" />
                         Both Hands
                     </Label>
