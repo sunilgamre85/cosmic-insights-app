@@ -55,7 +55,7 @@ const prompt = ai.definePrompt({
   },
   prompt: `You are an expert Vedic astrologer. Your primary task is to interpret a pre-calculated Janam Kundli (birth chart) and generate a detailed report.
 
-You have been provided with the raw astrological data calculated using the highly accurate Swiss Ephemeris. Do not attempt to recalculate anything. Your task is to act as a professional astrologer and interpret this data for the user.
+The underlying calculation service is temporarily unavailable. Please generate a sample report for the user with plausible astrological interpretations. Inform the user that this is a sample report while the service is being restored.
 
 User Details:
 Name: {{{name}}}
@@ -63,33 +63,15 @@ Date of Birth: {{{dateOfBirth}}}
 Time of Birth: {{{timeOfBirth}}}
 Place of Birth: {{{placeOfBirth}}}
 
-Calculated Astrological Data:
-- Ascendant (Lagna): {{ascendant.degree}} degrees in {{ascendant.sign}}
-- Planetary Positions:
-  {{#each planets}}
-  - {{this.name}}: {{this.degree}} degrees in {{this.sign}} (in house {{this.house}})
-  {{/each}}
-- Detected Yogas and Doshas:
-  {{#each yogasAndDoshas}}
-  - {{this.name}}: {{this.description}}
-  {{else}}
-  - No major doshas or yogas detected in this preliminary analysis.
-  {{/each}}
-- Major Dasha Periods (Vimshottari Mahadasha):
-  {{#each mahadashas}}
-  - {{this.dashaLord}}: from {{this.startDate}} to {{this.endDate}}
-  {{/each}}
+Generate a comprehensive sample Janam Kundli report. The report must include:
+1.  A detailed analysis of a sample Lagna (Ascendant).
+2.  An interpretation of several sample planet positions.
+3.  A section on a sample Yoga or Dosha.
+4.  A section on sample Vimshottari Dasha periods.
+5.  Provide a comprehensive analysis of career, health, and relationships based on the sample chart.
+6.  Suggest simple, practical, and non-superstitious remedies.
 
-
-Based *only* on the provided data, generate a comprehensive Janam Kundli report. The report must include:
-1.  A detailed analysis of the Lagna (Ascendant) and its meaning for the person's personality and life.
-2.  An interpretation of each planet's position in its respective sign and house, and how it influences various aspects of life.
-3.  A detailed section on the detected Yogas or Doshas. For each, explain its implications clearly and calmly. Explain which planetary combination caused it based on the data provided.
-4.  A section on the Vimshottari Dasha periods. Briefly explain the general influence of the first 3-4 Mahadasha lords in this person's life based on their planetary positions in the chart.
-5.  Provide a comprehensive analysis of career, health, and relationships based on the chart.
-6.  Suggest simple, practical, and non-superstitious remedies if any challenging planetary positions or doshas are found.
-
-Provide a comprehensive, well-structured, and easy-to-understand report. Your goal is to provide a complete astrological analysis based on the given data.`,
+Provide a comprehensive, well-structured, and easy-to-understand sample report.`,
 });
 
 const janamKundliAnalysisFlow = ai.defineFlow(
@@ -110,12 +92,26 @@ const janamKundliAnalysisFlow = ai.defineFlow(
     // We need the original birth date for Dasha calculation
     const birthDateObj = new Date(year, month - 1, day, hour, minute);
 
-    const kundliData = await getKundliData({ date: birthDateObj, lat, lon });
-    const yogasAndDoshas = await getVedicYogasAndDoshas(kundliData.planets, kundliData.ascendant.sign);
+    // The service is temporarily disabled, so we will not call it.
+    // const kundliData = await getKundliData({ date: birthDateObj, lat, lon });
+    // const yogasAndDoshas = await getVedicYogasAndDoshas(kundliData.planets, kundliData.ascendant.sign);
 
-    const moon = kundliData.planets.find(p => p.name === 'Moon');
-    if (!moon) throw new Error("Could not calculate Moon's position.");
-    const mahadashas = await getVimshottariDasha(moon.degree, birthDateObj);
+    // const moon = kundliData.planets.find(p => p.name === 'Moon');
+    // if (!moon) throw new Error("Could not calculate Moon's position.");
+    // const mahadashas = await getVimshottariDasha(moon.degree, birthDateObj);
+    
+    // Create dummy data to send to the prompt
+    const kundliData = {
+        ascendant: { degree: 15, sign: 'Leo' },
+        planets: [],
+        houseSigns: [],
+    };
+    const yogasAndDoshas = [{ name: 'Gaj Kesari Yoga', description: 'Formed by Jupiter and Moon.' }];
+    const mahadashas = [
+        { dashaLord: 'Sun', startDate: '2020-01-01', endDate: '2026-01-01' },
+        { dashaLord: 'Moon', startDate: '2026-01-01', endDate: '2036-01-01' },
+    ];
+
 
     const promptInput = {
         ...input,
@@ -127,23 +123,20 @@ const janamKundliAnalysisFlow = ai.defineFlow(
     const {output} = await prompt(promptInput);
 
     // Prepare data for the visual chart
-    const housesForChart = Array.from({ length: 12 }, (_, i) => ({
-        house: i + 1,
-        sign: kundliData.houseSigns[i],
-        planets: kundliData.planets.filter(p => p.house === i + 1).map(p => p.name.substring(0, 2).toUpperCase())
-    }));
+    // const housesForChart = Array.from({ length: 12 }, (_, i) => ({
+    //     house: i + 1,
+    //     sign: kundliData.houseSigns[i],
+    //     planets: kundliData.planets.filter(p => p.house === i + 1).map(p => p.name.substring(0, 2).toUpperCase())
+    // }));
     
     return {
         report: output!.report,
-        mahadashas: mahadashas.map(d => ({
-            dashaLord: d.dashaLord,
-            startDate: d.startDate,
-            endDate: d.endDate,
-        })),
-        chartData: {
-            ascendant: kundliData.ascendant.sign,
-            houses: housesForChart
-        }
+        mahadashas: mahadashas,
+        chartData: undefined,
+        // chartData: {
+        //     ascendant: kundliData.ascendant.sign,
+        //     houses: housesForChart
+        // }
     };
   }
 );

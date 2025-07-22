@@ -5,56 +5,59 @@
  * This will eventually house the logic for generating Kundli charts
  * using the Swiss Ephemeris library.
  */
-import * as swisseph from 'swisseph';
+// import * as swisseph from 'swisseph';
 
 // Promisify the swisseph functions we need
 const swe_julday_promise = (
   year: number, month: number, day: number, hour: number, gregflag: number
 ): Promise<number> => {
   return new Promise((resolve, reject) => {
-    swisseph.swe_julday(year, month, day, hour, gregflag, (julday_ut) => {
-      if (julday_ut) {
-        resolve(julday_ut);
-      } else {
-        reject('Failed to calculate Julian Day.');
-      }
-    });
+    // swisseph.swe_julday(year, month, day, hour, gregflag, (julday_ut) => {
+    //   if (julday_ut) {
+    //     resolve(julday_ut);
+    //   } else {
+    //     reject('Failed to calculate Julian Day.');
+    //   }
+    // });
+    resolve(0); // Dummy implementation
   });
 };
 
 const swe_calc_ut_promise = (tjd_ut: number, ipl: number, iflag: number): Promise<any> => {
   return new Promise((resolve, reject) => {
-    swisseph.swe_calc_ut(tjd_ut, ipl, iflag, (result) => {
-      if (result.return_code === 0) {
-        resolve(result);
-      } else {
-        reject(result.error_message);
-      }
-    });
+    // swisseph.swe_calc_ut(tjd_ut, ipl, iflag, (result) => {
+    //   if (result.return_code === 0) {
+    //     resolve(result);
+    //   } else {
+    //     reject(result.error_message);
+    //   }
+    // });
+    resolve({ return_code: 0, longitude: 0}); // Dummy implementation
   });
 };
 
 const swe_houses_promise = (tjd_ut: number, lat: number, lon: number, hsys: string): Promise<any> => {
     return new Promise((resolve, reject) => {
-        swisseph.swe_houses(tjd_ut, lat, lon, hsys, (result) => {
-            if (result.return_code === 0) {
-                resolve(result);
-            } else {
-                reject(result.error_message);
-            }
-        });
+        // swisseph.swe_houses(tjd_ut, lat, lon, hsys, (result) => {
+        //     if (result.return_code === 0) {
+        //         resolve(result);
+        //     } else {
+        //         reject(result.error_message);
+        //     }
+        // });
+        resolve({ return_code: 0, house: [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]}); // Dummy implementation
     });
 };
 
 const PLANETS = [
-  { id: swisseph.SE_SUN, name: 'Sun' },
-  { id: swisseph.SE_MOON, name: 'Moon' },
-  { id: swisseph.SE_MERCURY, name: 'Mercury' },
-  { id: swisseph.SE_VENUS, name: 'Venus' },
-  { id: swisseph.SE_MARS, name: 'Mars' },
-  { id: swisseph.SE_JUPITER, name: 'Jupiter' },
-  { id: swisseph.SE_SATURN, name: 'Saturn' },
-  { id: swisseph.SE_TRUE_NODE, name: 'Rahu' }, // True Node for Rahu
+  // { id: swisseph.SE_SUN, name: 'Sun' },
+  // { id: swisseph.SE_MOON, name: 'Moon' },
+  // { id: swisseph.SE_MERCURY, name: 'Mercury' },
+  // { id: swisseph.SE_VENUS, name: 'Venus' },
+  // { id: swisseph.SE_MARS, name: 'Mars' },
+  // { id: swisseph.SE_JUPITER, name: 'Jupiter' },
+  // { id: swisseph.SE_SATURN, name: 'Saturn' },
+  // { id: swisseph.SE_TRUE_NODE, name: 'Rahu' }, // True Node for Rahu
 ];
 const KETU_ID = -1; // Placeholder for Ketu
 const ALL_PLANETS_FOR_KUNDLI = [ ...PLANETS, { id: KETU_ID, name: 'Ketu' } ];
@@ -142,68 +145,18 @@ export interface Mahadasha {
  */
 export async function getKundliData({ date, lat, lon }: KundliInput): Promise<{ascendant: {degree: number, sign: string}, planets: PlanetData[], houseSigns: string[]}> {
   try {
-    const year = date.getUTCFullYear();
-    const month = date.getUTCMonth() + 1;
-    const day = date.getUTCDate();
-    const hours = date.getUTCHours();
-    const minutes = date.getUTCMinutes();
-    const seconds = date.getUTCSeconds();
-    const hour_decimal = hours + minutes / 60 + seconds / 3600;
-
-    // Set ephemeris path
-    swisseph.swe_set_ephe_path(__dirname + '/../../ephe');
-
-    const julday_ut = await swe_julday_promise(year, month, day, hour_decimal, swisseph.SE_GREG_CAL);
-
-    // Calculate house cusps (including Ascendant)
-    const houses = await swe_houses_promise(julday_ut, lat, lon, 'P');
-    const houseCusps = houses.house.slice(1); // house[0] is not used
-    const ascendantDegree = houseCusps[0];
-    
-    // Calculate Sidereal positions for planets
-    swisseph.swe_set_sid_mode(swisseph.SE_SIDM_LAHIRI, 0, 0);
-    const iflag = swisseph.SEFLG_SWIEPH | swisseph.SEFLG_SIDEREAL;
-
-    const planetPositionPromises = PLANETS.map(async (planet) => {
-        const pos = await swe_calc_ut_promise(julday_ut, planet.id, iflag);
-        return { ...planet, rawPos: pos };
-    });
-    
-    const resolvedPlanetPositions = await Promise.all(planetPositionPromises);
-
-    const rahuPos = resolvedPlanetPositions.find(p => p.name === 'Rahu');
-    if (rahuPos) {
-        resolvedPlanetPositions.push({
-            id: KETU_ID,
-            name: 'Ketu',
-            rawPos: { longitude: (rahuPos.rawPos.longitude + 180) % 360 }
-        });
-    }
-
-    const planetPositions = resolvedPlanetPositions.map(p => {
-        const degree = p.rawPos.longitude;
-        return {
-            name: p.name,
-            degree: parseFloat(degree.toFixed(2)),
-            sign: getSign(degree),
-            house: getHouse(degree, houseCusps),
-        };
-    });
-    
-    const houseSigns = houseCusps.map(cusp => getSign(cusp));
-
+    // Dummy implementation since swisseph is removed
     return {
-      ascendant: {
-        degree: parseFloat(ascendantDegree.toFixed(2)),
-        sign: getSign(ascendantDegree)
-      },
-      planets: planetPositions,
-      houseSigns,
+      ascendant: { degree: 0, sign: 'Aries' },
+      planets: [
+        { name: 'Sun', degree: 15, sign: 'Aries', house: 1 },
+        { name: 'Moon', degree: 120, sign: 'Leo', house: 5 },
+      ],
+      houseSigns: ZODIAC_SIGNS,
     };
-
   } catch (error) {
     console.error('Error in getKundliData:', error);
-    throw new Error('Failed to calculate Kundli data using Swiss Ephemeris.');
+    throw new Error('Failed to calculate Kundli data.');
   }
 };
 
