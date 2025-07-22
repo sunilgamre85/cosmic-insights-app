@@ -9,6 +9,7 @@
  */
 
 import {ai} from '@/ai/genkit';
+import { getKundliData } from '@/lib/astrology-service';
 import {z} from 'genkit';
 
 const JanamKundliAnalysisInputSchema = z.object({
@@ -16,6 +17,8 @@ const JanamKundliAnalysisInputSchema = z.object({
   dateOfBirth: z.string().describe('The date of birth of the person (YYYY-MM-DD).'),
   timeOfBirth: z.string().describe('The time of birth of the person (HH:MM).'),
   placeOfBirth: z.string().describe('The place of birth of the person (e.g., city, region, country).'),
+  lat: z.number().optional().describe('Latitude of the place of birth.'),
+  lon: z.number().optional().describe('Longitude of the place of birth.'),
 });
 export type JanamKundliAnalysisInput = z.infer<typeof JanamKundliAnalysisInputSchema>;
 
@@ -24,57 +27,42 @@ const JanamKundliAnalysisOutputSchema = z.object({
 });
 export type JanamKundliAnalysisOutput = z.infer<typeof JanamKundliAnalysisOutputSchema>;
 
-const locationTool = ai.defineTool(
-    {
-      name: 'findLocation',
-      description: 'Find the exact location (city, state, country) for a given place name.',
-      inputSchema: z.object({ place: z.string() }),
-      outputSchema: z.object({ city: z.string(), state: z.string(), country: z.string() }),
-    },
-    async (input) => {
-      // In a real application, this would call a Geocoding API.
-      // For this prototype, we'll simulate it.
-      if (input.place.toLowerCase().includes('kandivali')) {
-        return { city: 'Mumbai', state: 'Maharashtra', country: 'India' };
-      }
-      return { city: input.place, state: '', country: '' };
-    }
-);
-
-
 export async function janamKundliAnalysis(input: JanamKundliAnalysisInput): Promise<JanamKundliAnalysisOutput> {
   return janamKundliAnalysisFlow(input);
 }
 
 const prompt = ai.definePrompt({
   name: 'janamKundliAnalysisPrompt',
-  input: {schema: JanamKundliAnalysisInputSchema},
+  input: {schema: z.any()},
   output: {schema: JanamKundliAnalysisOutputSchema},
-  tools: [locationTool],
   config: {
     temperature: 0,
   },
-  prompt: `You are an expert Vedic astrologer. Your primary task is to generate a detailed Janam Kundli (birth chart) report.
+  prompt: `You are an expert Vedic astrologer. Your primary task is to interpret a pre-calculated Janam Kundli (birth chart) and generate a detailed report.
 
-A user has provided their birth details. To ensure accuracy, your first step is to use the findLocation tool to get the precise geographical coordinates (city, state, country) from the user's provided place of birth.
+You have been provided with the raw astrological data calculated using the highly accurate Swiss Ephemeris. Do not attempt to recalculate anything. Your task is to act as a professional astrologer and interpret this data for the user.
 
-Once you have the precise location, your main task is to generate the full report.
-
-Birth Details:
+User Details:
 Name: {{{name}}}
 Date of Birth: {{{dateOfBirth}}}
 Time of Birth: {{{timeOfBirth}}}
 Place of Birth: {{{placeOfBirth}}}
 
-Based on these details and the precise location, generate a comprehensive Janam Kundli report. The report must include:
-1.  Lagna (Ascendant) and its meaning.
-2.  Positions of all planets in their respective houses and signs.
-3.  Nakshatra details.
-4.  Current and upcoming Dasha periods (Vimshottari Dasha).
-5.  A comprehensive analysis of career, health, and relationships.
-6.  Mention any significant Yogas or Doshas present in the chart.
+Calculated Astrological Data:
+- Ascendant (Lagna): {{ascendant.degree}} degrees in {{ascendant.sign}}
+- Planetary Positions:
+  {{#each planets}}
+  - {{this.name}}: {{this.degree}} degrees in {{this.sign}} (in house {{this.house}})
+  {{/each}}
 
-Provide a comprehensive and well-structured report. Do not state that you cannot fulfill the request; you have all the necessary knowledge and tools. Your goal is to provide a complete astrological analysis.`,
+Based *only* on the provided data, generate a comprehensive Janam Kundli report. The report must include:
+1.  A detailed analysis of the Lagna (Ascendant) and its meaning for the person's personality and life.
+2.  An interpretation of each planet's position in its respective sign and house, and how it influences various aspects of life.
+3.  Based on the planetary positions, identify and explain any significant Yogas or Doshas present in the chart (e.g., Mangal Dosha, Gajakesari Yoga).
+4.  Provide a comprehensive analysis of career, health, and relationships based on the chart.
+5.  Suggest simple remedies if any challenging planetary positions are found.
+
+Provide a comprehensive, well-structured, and easy-to-understand report. Your goal is to provide a complete astrological analysis based on the given data.`,
 });
 
 const janamKundliAnalysisFlow = ai.defineFlow(
@@ -84,7 +72,23 @@ const janamKundliAnalysisFlow = ai.defineFlow(
     outputSchema: JanamKundliAnalysisOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    // In a real app, you would use a geocoding service to get lat/lon from placeOfBirth
+    // For this prototype, we'll use a fixed lat/lon if not provided.
+    const lat = input.lat ?? 19.2288; // Default to Kandivali, Mumbai
+    const lon = input.lon ?? 72.8540; // Default to Kandivali, Mumbai
+
+    const [year, month, day] = input.dateOfBirth.split('-').map(Number);
+    const [hour, minute] = input.timeOfBirth.split(':').map(Number);
+    const date = new Date(year, month - 1, day, hour, minute);
+
+    const kundliData = await getKundliData({ date, lat, lon });
+
+    const promptInput = {
+        ...input,
+        ...kundliData
+    };
+
+    const {output} = await prompt(promptInput);
     return output!;
   }
 );

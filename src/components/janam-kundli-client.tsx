@@ -164,7 +164,7 @@ export function JanamKundliClient() {
                   name="hourOfBirth"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Hour of Birth</FormLabel>
+                      <FormLabel>Hour of Birth (24hr)</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
