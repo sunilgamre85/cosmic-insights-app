@@ -20,7 +20,7 @@ const JanamKundliAnalysisInputSchema = z.object({
 export type JanamKundliAnalysisInput = z.infer<typeof JanamKundliAnalysisInputSchema>;
 
 const JanamKundliAnalysisOutputSchema = z.object({
-    report: z.string().describe('A detailed Janam Kundli report including planetary positions and their significance.')
+    report: z.string().describe('A detailed Janam Kundli report including planetary positions, Lagna, Nakshatra, Dasha periods, and their significance.')
 });
 export type JanamKundliAnalysisOutput = z.infer<typeof JanamKundliAnalysisOutputSchema>;
 
@@ -39,7 +39,16 @@ Date of Birth: {{{dateOfBirth}}}
 Time of Birth: {{{timeOfBirth}}}
 Place of Birth: {{{placeOfBirth}}}
 
-Analyze the planetary positions and their significance on the person's life, personality, strengths, and weaknesses. Provide a comprehensive report.`,
+Analyze the planetary positions and their significance on the person's life, personality, strengths, and weaknesses. 
+The report must include:
+1.  Lagna (Ascendant) and its meaning.
+2.  Positions of all planets in their respective houses and signs.
+3.  Nakshatra details.
+4.  Current and upcoming Dasha periods (Vimshottari Dasha).
+5.  A comprehensive analysis of career, health, and relationships.
+6.  Mention any significant Yogas or Doshas present in the chart.
+
+Provide a comprehensive and well-structured report.`,
 });
 
 const janamKundliAnalysisFlow = ai.defineFlow(

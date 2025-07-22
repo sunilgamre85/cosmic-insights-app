@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Hand, Gem, Sparkles, Newspaper, Bot, Star } from 'lucide-react';
+import { Hand, Gem, Sparkles, Newspaper, Bot, Star, HeartHandshake } from 'lucide-react';
 
 const features = [
   {
@@ -31,6 +31,13 @@ const features = [
     link: '/janam-kundli',
     icon: <Star className="h-8 w-8 text-primary" />,
     cta: 'Get Your Kundli',
+  },
+  {
+    title: 'Kundli Matching',
+    description: 'Check marriage compatibility by comparing two birth charts for a harmonious union.',
+    link: '/kundli-matching',
+    icon: <HeartHandshake className="h-8 w-8 text-primary" />,
+    cta: 'Match Kundlis',
   },
   {
     title: 'Astrology Blog',

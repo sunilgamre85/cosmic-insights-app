@@ -21,6 +21,7 @@ import {
   Settings,
   Shield,
   Star,
+  HeartHandshake,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -31,6 +32,7 @@ const menuItems = [
   { href: '/numerology', icon: Gem, label: 'Numerology' },
   { href: '/horoscope', icon: Sparkles, label: 'Daily Horoscope' },
   { href: '/janam-kundli', icon: Star, label: 'Janam Kundli' },
+  { href: '/kundli-matching', icon: HeartHandshake, label: 'Kundli Matching' },
   { href: '/blog', icon: Newspaper, label: 'Blog' },
 ];
 
