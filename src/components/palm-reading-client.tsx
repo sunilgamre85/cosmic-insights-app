@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain } from "lucide-react";
+import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle } from "lucide-react";
 import { analyzePalm, type AnalyzePalmOutput } from "@/ai/flows/ai-palm-reading";
 import { Separator } from "./ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 
 const lineColors = {
     lifeLine: 'stroke-red-500',
@@ -103,9 +104,10 @@ export function PalmReadingClient() {
       }
     } catch (error) {
       console.error("Analysis failed:", error);
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
       toast({
         title: "Analysis Failed",
-        description: "Something went wrong. Please try again with a different image.",
+        description: `The AI was unable to analyze your palm. Please try again with a clear, well-lit image. (Error: ${errorMessage})`,
         variant: "destructive",
       });
     } finally {
@@ -114,9 +116,9 @@ export function PalmReadingClient() {
   };
   
   const lineDetails = result ? [
-    { key: 'lifeLine', title: "Life Line", data: result.lifeLine, icon: <Hand className="h-5 w-5" /> },
-    { key: 'headline', title: "Head Line", data: result.headline, icon: <Brain className="h-5 w-5" /> },
-    { key: 'heartLine', title: "Heart Line", data: result.heartLine, icon: <Heart className="h-5 w-5" /> },
+    ...(result.lifeLine ? [{ key: 'lifeLine', title: "Life Line", data: result.lifeLine, icon: <Hand className="h-5 w-5" /> }] : []),
+    ...(result.headline ? [{ key: 'headline', title: "Head Line", data: result.headline, icon: <Brain className="h-5 w-5" /> }] : []),
+    ...(result.heartLine ? [{ key: 'heartLine', title: "Heart Line", data: result.heartLine, icon: <Heart className="h-5 w-5" /> }] : []),
     ...(result.fateLine ? [{ key: 'fateLine', title: "Fate Line", data: result.fateLine, icon: <Sparkles className="h-5 w-5" /> }] : [])
   ] : [];
 
@@ -128,7 +130,7 @@ export function PalmReadingClient() {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-lg w-full">
+      <Card className="shadow-lg w-full max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2"><Upload className="h-6 w-6" /> Upload Your Palm</CardTitle>
           <CardDescription>Upload a clear image of your dominant hand's palm.</CardDescription>
@@ -151,25 +153,27 @@ export function PalmReadingClient() {
                   <Input id="palm-image-upload" type="file" className="hidden" onChange={handleFileChange} accept="image/png, image/jpeg, image/webp" />
                 </Label>
               ) : (
-                <div className="relative w-full h-64 rounded-lg overflow-hidden border">
-                  <Image src={previewUrl} alt="Palm preview" layout="fill" objectFit="cover" />
-                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={handleRemoveImage}>
+                <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
+                  <Image src={previewUrl} alt="Palm preview" layout="fill" objectFit="contain" />
+                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 z-10" onClick={handleRemoveImage}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               )}
             </div>
-            <Button onClick={handleAnalyze} disabled={!file || isLoading} className="w-full">
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
-                </>
-              ) : (
-                <>
-                  <Wand2 className="mr-2 h-4 w-4" /> Analyze with AI
-                </>
-              )}
-            </Button>
+            {previewUrl && 
+                <Button onClick={handleAnalyze} disabled={!file || isLoading} className="w-full">
+                {isLoading ? (
+                    <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
+                    </>
+                ) : (
+                    <>
+                    <Wand2 className="mr-2 h-4 w-4" /> Analyze with AI
+                    </>
+                )}
+                </Button>
+            }
           </div>
         </CardContent>
       </Card>
@@ -183,7 +187,7 @@ export function PalmReadingClient() {
       )}
 
       {result && (
-        <Card className="shadow-lg w-full">
+        <Card className="shadow-lg w-full max-w-2xl mx-auto">
             <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> AI Analysis</CardTitle>
             <CardDescription>Hover over a line's analysis to see it highlighted on the image.</CardDescription>
@@ -210,7 +214,7 @@ export function PalmReadingClient() {
                         </svg>
                     </div>
                 )}
-                 {lineDetails.map((detail, index) => detail.data && (
+                 {lineDetails.length > 0 ? lineDetails.map((detail, index) => detail.data && (
                     <div 
                       key={detail.key}
                       onMouseEnter={() => setHighlightedLine(detail.key)}
@@ -226,7 +230,15 @@ export function PalmReadingClient() {
                         </p>
                         {index < lineDetails.length - 1 && <Separator className="mt-6" />}
                     </div>
-                ))}
+                )) : (
+                    <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Analysis Incomplete</AlertTitle>
+                        <AlertDescription>
+                            The AI was unable to identify the standard palm lines in the provided image. Please try again with a clearer, more direct photo of your palm.
+                        </AlertDescription>
+                    </Alert>
+                )}
             </CardContent>
         </Card>
       )}

@@ -35,6 +35,7 @@ const AnalyzePalmOutputSchema = z.object({
   heartLine: LineSchema.describe('Analysis and path of the heart line.'),
   headline: LineSchema.describe('Analysis and path of the head line.'),
   fateLine: LineSchema.optional().describe('Analysis and path of the fate line (if visible).'),
+  error: z.string().optional().describe('An error message if the palm could not be analyzed.'),
 });
 export type AnalyzePalmOutput = z.infer<typeof AnalyzePalmOutputSchema>;
 
@@ -49,16 +50,18 @@ const prompt = ai.definePrompt({
   config: {
     temperature: 0.2,
   },
-  prompt: `You are an expert palm reader. Analyze the user's palm from the provided image.
+  prompt: `You are an expert palm reader. Your task is to analyze the user's palm from the provided image, regardless of whether it is a left or right hand.
 
 Palm Image: {{media url=photoDataUri}}
 
-For each of the major palm lines (Life Line, Heart Line, Head Line, and Fate Line if visible), provide a detailed analysis.
-In addition to the analysis, you MUST provide the coordinates for the path of each line.
-The path should be an array of {x, y} points. The coordinates must be normalized, ranging from 0.0 to 1.0, where (0,0) is the top-left corner and (1,1) is the bottom-right corner of the image.
-Trace the line from its start to its end with a reasonable number of points (e.g., 5-10 points) to capture its curve.
+Identify and analyze the major palm lines visible in the image (Life Line, Heart Line, Head Line, and Fate Line if present).
 
-Return the full analysis and all coordinate paths in the requested JSON format.`,
+For each line you identify, provide a detailed analysis.
+In addition to the analysis, you MUST provide the coordinates for the path of each line. The path should be an array of {x, y} points. The coordinates must be normalized, ranging from 0.0 to 1.0, where (0,0) is the top-left corner and (1,1) is the bottom-right corner of the image. Trace the line from its start to its end with a reasonable number of points (e.g., 5-10 points) to capture its curve.
+
+If you cannot clearly identify the palm or its lines from the image, set the 'error' field with a helpful message like "The image is unclear or does not appear to be a palm. Please provide a clear, well-lit photo of a palm."
+
+Return the full analysis and all coordinate paths in the requested JSON format. If there is an error, return the error message and leave the line fields empty.`,
 });
 
 const analyzePalmFlow = ai.defineFlow(
@@ -69,6 +72,12 @@ const analyzePalmFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+        throw new Error("The AI model failed to return a valid analysis. The image might be unclear.");
+    }
+    if (output.error) {
+        throw new Error(`AI analysis failed: ${output.error}`);
+    }
+    return output;
   }
 );
