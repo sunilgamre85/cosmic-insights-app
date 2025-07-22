@@ -1,73 +1,41 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, Loader2, Smartphone, Wand2, Sparkles, Gem, Star, MessageCircle, ShieldCheck } from "lucide-react";
-import { mobileNumerologyAnalysis, type MobileNumerologyAnalysisOutput } from "@/ai/flows/mobile-numerology-analysis";
-import { useUserInput } from "@/context/UserInputContext";
-import { Separator } from "./ui/separator";
-import { Badge } from "./ui/badge";
+import { Loader2, Smartphone, Wand2 } from "lucide-react";
+import { analyzeMobileNumber, type NumerologyResult } from "@/lib/mobile-numerology";
 import { ScrollArea } from "./ui/scroll-area";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion";
 
 const formSchema = z.object({
   mobileNumber: z.string().min(10, "Please enter a valid 10-digit mobile number.").max(15, "Please enter a valid mobile number."),
-  name: z.string().optional(),
-  dateOfBirth: z.date().optional(),
 });
 
 export function MobileNumerologyClient() {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<MobileNumerologyAnalysisOutput | null>(null);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [result, setResult] = useState<NumerologyResult | null>(null);
   const { toast } = useToast();
-  const { userDetails, setUserDetails } = useUserInput();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       mobileNumber: "",
-      name: userDetails.name || "",
-      dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
     },
   });
-
-  useEffect(() => {
-    form.reset({
-        ...form.getValues(),
-      name: userDetails.name || "",
-      dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
-    });
-  }, [userDetails, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setResult(null);
     try {
-      if (values.name && values.dateOfBirth && (!userDetails.name || !userDetails.dateOfBirth)) {
-        setUserDetails({
-          name: values.name,
-          dateOfBirth: values.dateOfBirth.toISOString(),
-        });
-      }
-
-      const analysisResult = await mobileNumerologyAnalysis({
-        mobileNumber: values.mobileNumber,
-        name: values.name,
-        dateOfBirth: values.dateOfBirth ? format(values.dateOfBirth, "yyyy-MM-dd") : undefined,
-      });
+      // Using the local function instead of an AI flow
+      const analysisResult = analyzeMobileNumber(values.mobileNumber);
       setResult(analysisResult);
     } catch (error) {
       console.error("Analysis failed:", error);
@@ -104,65 +72,6 @@ export function MobileNumerologyClient() {
                   </FormItem>
                 )}
               />
-               <CardDescription>For a more personalized reading, add your name and date of birth.</CardDescription>
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Full Name (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. John Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="dateOfBirth"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Date of Birth (Optional)</FormLabel>
-                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? format(field.value, "PPP") : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          captionLayout="dropdown-buttons"
-                          fromYear={1900}
-                          toYear={new Date().getFullYear()}
-                          selected={field.value}
-                          onSelect={(date) => {
-                            field.onChange(date);
-                            setIsCalendarOpen(false);
-                          }}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...</>
@@ -178,7 +87,7 @@ export function MobileNumerologyClient() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="font-headline">Your Mobile Number Report</CardTitle>
-          <CardDescription>The vibration and compatibility of your number will appear below.</CardDescription>
+          <CardDescription>The vibration and meaning of your number will appear below.</CardDescription>
         </CardHeader>
         <CardContent className="min-h-[400px]">
           {isLoading && (
@@ -195,68 +104,24 @@ export function MobileNumerologyClient() {
             </div>
           )}
           {result && (
-            <ScrollArea className="h-[calc(100vh-220px)] w-full pr-4">
+            <ScrollArea className="h-full w-full pr-4">
             <div className="space-y-6 animate-in fade-in-50 duration-500">
                 <div className="text-center p-4 rounded-lg bg-secondary">
-                    <h3 className="font-headline text-lg text-secondary-foreground">Vibration Number</h3>
-                    <p className="text-6xl font-bold text-primary">{result.vibrationNumber}</p>
+                    <h3 className="font-headline text-lg text-secondary-foreground">Final Number</h3>
+                    <p className="text-6xl font-bold text-primary">{result.reduced}</p>
+                    <p className="text-sm text-muted-foreground">Total Sum: {result.sum}</p>
                 </div>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline text-xl flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary"/> Personalized Affirmation</CardTitle>
+                        <CardTitle className="font-headline text-xl">Meaning of Number {result.reduced}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-lg italic text-center text-foreground/90">"{result.affirmation}"</p>
+                        <p className="text-lg text-center text-foreground/90">
+                           {result.meaning}
+                        </p>
                     </CardContent>
                 </Card>
-
-                <Accordion type="single" collapsible defaultValue="analysis" className="w-full">
-                    <AccordionItem value="analysis">
-                        <AccordionTrigger className="font-headline text-lg">Vibration Analysis</AccordionTrigger>
-                        <AccordionContent className="text-base whitespace-pre-wrap">{result.analysis}</AccordionContent>
-                    </AccordionItem>
-                    {result.compatibility && (
-                        <AccordionItem value="compatibility">
-                            <AccordionTrigger className="font-headline text-lg">Compatibility with Life Path</AccordionTrigger>
-                            <AccordionContent className="text-base whitespace-pre-wrap">{result.compatibility}</AccordionContent>
-                        </AccordionItem>
-                    )}
-                </Accordion>
-                
-                <Card className="bg-secondary/50">
-                    <CardHeader>
-                        <CardTitle className="font-headline text-xl flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary"/> Cosmic Guidance</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center gap-4">
-                            <Star className="h-6 w-6 text-accent" />
-                            <div>
-                                <h4 className="font-semibold">Ruling Planet</h4>
-                                <p className="text-muted-foreground">{result.rulingPlanet}</p>
-                            </div>
-                        </div>
-                         <div className="flex items-center gap-4">
-                            <Gem className="h-6 w-6 text-accent" />
-                            <div>
-                                <h4 className="font-semibold">Lucky Gemstone</h4>
-                                <p className="text-muted-foreground">{result.gemstone}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-xl flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary"/> Simple Remedies</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ul className="list-disc pl-5 space-y-2 text-foreground/90">
-                            {result.remedies.map((remedy, index) => <li key={index}>{remedy}</li>)}
-                        </ul>
-                    </CardContent>
-                </Card>
-
             </div>
             </ScrollArea>
           )}
