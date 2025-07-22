@@ -31,6 +31,7 @@ const formSchema = z.object({
 export function JanamKundliClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<JanamKundliAnalysisOutput | null>(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const { toast } = useToast();
   const { userDetails, setUserDetails } = useUserInput();
 
@@ -107,7 +108,7 @@ export function JanamKundliClient() {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date of Birth</FormLabel>
-                    <Popover>
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -133,7 +134,10 @@ export function JanamKundliClient() {
                           fromYear={1900}
                           toYear={new Date().getFullYear()}
                           selected={field.value}
-                          onSelect={field.onChange}
+                          onSelect={(date) => {
+                            field.onChange(date);
+                            setIsCalendarOpen(false);
+                          }}
                           disabled={(date) =>
                             date > new Date() || date < new Date("1900-01-01")
                           }

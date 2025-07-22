@@ -37,6 +37,8 @@ const formSchema = z.object({
 export function KundliMatchingClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<KundliMatchingAnalysisOutput | null>(null);
+  const [person1CalendarOpen, setPerson1CalendarOpen] = useState(false);
+  const [person2CalendarOpen, setPerson2CalendarOpen] = useState(false);
   const { toast } = useToast();
   const { userDetails, setUserDetails } = useUserInput();
 
@@ -100,7 +102,12 @@ export function KundliMatchingClient() {
     }
   }
 
-  const renderPersonFields = (person: "person1" | "person2", title: string) => (
+  const renderPersonFields = (
+    person: "person1" | "person2", 
+    title: string, 
+    isCalendarOpen: boolean, 
+    setCalendarOpen: (open: boolean) => void
+  ) => (
     <div className="space-y-4">
       <h3 className="font-headline text-lg flex items-center gap-2"><User /> {title}</h3>
       <FormField
@@ -122,7 +129,7 @@ export function KundliMatchingClient() {
         render={({ field }) => (
           <FormItem className="flex flex-col">
             <FormLabel>Date of Birth</FormLabel>
-            <Popover>
+            <Popover open={isCalendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <FormControl>
                   <Button
@@ -141,7 +148,10 @@ export function KundliMatchingClient() {
                     fromYear={1900}
                     toYear={new Date().getFullYear()}
                     selected={field.value} 
-                    onSelect={field.onChange} 
+                    onSelect={(date) => {
+                      field.onChange(date);
+                      setCalendarOpen(false);
+                    }}
                     disabled={(date) => date > new Date() || date < new Date("1900-01-01")} 
                     initialFocus />
               </PopoverContent>
@@ -190,8 +200,8 @@ export function KundliMatchingClient() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="grid md:grid-cols-2 gap-8">
-                {renderPersonFields("person1", "Person 1")}
-                {renderPersonFields("person2", "Person 2")}
+                {renderPersonFields("person1", "Person 1", person1CalendarOpen, setPerson1CalendarOpen)}
+                {renderPersonFields("person2", "Person 2", person2CalendarOpen, setPerson2CalendarOpen)}
               </div>
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? (
