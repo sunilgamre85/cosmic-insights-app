@@ -104,7 +104,9 @@ export default function Home() {
               </p>
             </div>
             <div className="mx-auto w-full max-w-sm space-y-2">
-              <Button type="button" disabled>Chat with AI Astrologer (Coming Soon)</Button>
+              <Link href="/chat">
+                <Button>Chat with AI Astrologer</Button>
+              </Link>
             </div>
           </div>
         </section>
