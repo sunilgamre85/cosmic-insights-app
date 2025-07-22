@@ -24,6 +24,7 @@ import {
   HeartHandshake,
   Bot,
   Smartphone,
+  BookOpen,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -36,6 +37,7 @@ const menuItems = [
   { href: '/janam-kundli', icon: Star, label: 'Janam Kundli' },
   { href: '/kundli-matching', icon: HeartHandshake, label: 'Kundli Matching' },
   { href: '/mobile-numerology', icon: Smartphone, label: 'Mobile Numerology' },
+  { href: '/tarot-reading', icon: BookOpen, label: 'Tarot Reading' },
   { href: '/chat', icon: Bot, label: 'AI Chat' },
   { href: '/blog', icon: Newspaper, label: 'Blog' },
 ];

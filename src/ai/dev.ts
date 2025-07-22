@@ -7,3 +7,4 @@ import '@/ai/flows/janam-kundli-analysis.ts';
 import '@/ai/flows/kundli-matching-analysis.ts';
 import '@/ai/flows/ai-chat.ts';
 import '@/ai/flows/mobile-numerology-analysis.ts';
+import '@/ai/flows/tarot-card-reading.ts';

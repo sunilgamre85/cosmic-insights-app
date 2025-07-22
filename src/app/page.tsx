@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Hand, Gem, Sparkles, Newspaper, Bot, Star, HeartHandshake, Smartphone } from 'lucide-react';
+import { Hand, Gem, Sparkles, Newspaper, Bot, Star, HeartHandshake, Smartphone, BookOpen } from 'lucide-react';
 
 const features = [
   {
@@ -24,6 +24,13 @@ const features = [
     link: '/horoscope',
     icon: <Sparkles className="h-8 w-8 text-primary" />,
     cta: 'Check Your Horoscope',
+  },
+  {
+    title: 'Tarot Reading',
+    description: 'Get insights into your past, present, and future with a three-card tarot spread.',
+    link: '/tarot-reading',
+    icon: <BookOpen className="h-8 w-8 text-primary" />,
+    cta: 'Get a Reading',
   },
   {
     title: 'Janam Kundli',

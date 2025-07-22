@@ -146,3 +146,35 @@ export const blogPosts = [
         dataAiHint: 'ram constellation',
     },
 ];
+
+
+export type TarotCard = {
+  name: string;
+  imageUrl: string;
+  dataAiHint: string;
+};
+
+export const tarotCards: TarotCard[] = [
+  { name: "The Fool", imageUrl: "https://placehold.co/200x350", dataAiHint: "jester cliff" },
+  { name: "The Magician", imageUrl: "https://placehold.co/200x350", dataAiHint: "wizard alchemy" },
+  { name: "The High Priestess", imageUrl: "https://placehold.co/200x350", dataAiHint: "mystic moon" },
+  { name: "The Empress", imageUrl: "https://placehold.co/200x350", dataAiHint: "queen nature" },
+  { name: "The Emperor", imageUrl: "https://placehold.co/200x350", dataAiHint: "king throne" },
+  { name: "The Hierophant", imageUrl: "https://placehold.co/200x350", dataAiHint: "priest tradition" },
+  { name: "The Lovers", imageUrl: "https://placehold.co/200x350", dataAiHint: "couple harmony" },
+  { name: "The Chariot", imageUrl: "https://placehold.co/200x350", dataAiHint: "warrior victory" },
+  { name: "Strength", imageUrl: "https://placehold.co/200x350", dataAiHint: "woman lion" },
+  { name: "The Hermit", imageUrl: "https://placehold.co/200x350", dataAiHint: "hermit lantern" },
+  { name: "Wheel of Fortune", imageUrl: "https://placehold.co/200x350", dataAiHint: "spinning wheel" },
+  { name: "Justice", imageUrl: "https://placehold.co/200x350", dataAiHint: "scales sword" },
+  { name: "The Hanged Man", imageUrl: "https://placehold.co/200x350", dataAiHint: "man hanging" },
+  { name: "Death", imageUrl: "https://placehold.co/200x350", dataAiHint: "skeleton horse" },
+  { name: "Temperance", imageUrl: "https://placehold.co/200x350", dataAiHint: "angel water" },
+  { name: "The Devil", imageUrl: "https://placehold.co/200x350", dataAiHint: "demon chains" },
+  { name: "The Tower", imageUrl: "https://placehold.co/200x350", dataAiHint: "tower lightning" },
+  { name: "The Star", imageUrl: "https://placehold.co/200x350", dataAiHint: "woman star" },
+  { name: "The Moon", imageUrl: "https://placehold.co/200x350", dataAiHint: "moon illusion" },
+  { name: "The Sun", imageUrl: "https://placehold.co/200x350", dataAiHint: "sun child" },
+  { name: "Judgement", imageUrl: "https://placehold.co/200x350", dataAiHint: "angel trumpet" },
+  { name: "The World", imageUrl: "https://placehold.co/200x350", dataAiHint: "dancer wreath" },
+];

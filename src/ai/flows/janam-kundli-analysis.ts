@@ -111,11 +111,11 @@ const janamKundliAnalysisFlow = ai.defineFlow(
     const birthDateObj = new Date(year, month - 1, day, hour, minute);
 
     const kundliData = await getKundliData({ date: birthDateObj, lat, lon });
-    const yogasAndDoshas = getVedicYogasAndDoshas(kundliData.planets, kundliData.ascendant.sign);
+    const yogasAndDoshas = await getVedicYogasAndDoshas(kundliData.planets, kundliData.ascendant.sign);
 
     const moon = kundliData.planets.find(p => p.name === 'Moon');
     if (!moon) throw new Error("Could not calculate Moon's position.");
-    const mahadashas = getVimshottariDasha(moon.degree, birthDateObj);
+    const mahadashas = await getVimshottariDasha(moon.degree, birthDateObj);
 
     const promptInput = {
         ...input,

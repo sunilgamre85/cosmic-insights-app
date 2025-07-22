@@ -140,7 +140,7 @@ export interface Mahadasha {
 /**
  * Calculates the core Kundli data (planetary positions and ascendant).
  */
-export const getKundliData = async ({ date, lat, lon }: KundliInput): Promise<{ascendant: {degree: number, sign: string}, planets: PlanetData[], houseSigns: string[]}> => {
+export async function getKundliData({ date, lat, lon }: KundliInput): Promise<{ascendant: {degree: number, sign: string}, planets: PlanetData[], houseSigns: string[]}> {
   try {
     const year = date.getUTCFullYear();
     const month = date.getUTCMonth() + 1;
@@ -211,7 +211,7 @@ export const getKundliData = async ({ date, lat, lon }: KundliInput): Promise<{a
 /**
  * Calculates astrological doshas and yogas based on planet positions.
  */
-export const getVedicYogasAndDoshas = (planets: PlanetData[], ascendantSign: string): { name: string; description: string }[] => {
+export async function getVedicYogasAndDoshas(planets: PlanetData[], ascendantSign: string): Promise<{ name: string; description: string }[]> {
     const results: { name: string; description: string }[] = [];
     const getPlanet = (name: string) => planets.find(p => p.name === name);
 
@@ -251,7 +251,7 @@ export const getVedicYogasAndDoshas = (planets: PlanetData[], ascendantSign: str
 /**
  * Calculates the Vimshottari Dasha periods.
  */
-export const getVimshottariDasha = (moonDegree: number, birthDate: Date): Mahadasha[] => {
+export async function getVimshottariDasha(moonDegree: number, birthDate: Date): Promise<Mahadasha[]> {
     const moonNakshatra = getNakshatra(moonDegree);
     const startingLord = moonNakshatra.lord;
     const lordDuration = DASHA_DURATIONS[startingLord];
