@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -21,6 +22,7 @@ import { useUserInput } from "@/context/UserInputContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Separator } from "./ui/separator";
+import { LagnaChart } from "./lagna-chart";
 
 const formSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
@@ -253,6 +255,13 @@ export function JanamKundliClient() {
           {result && (
             <ScrollArea className="h-[calc(100vh-220px)] w-full pr-4">
                 <div className="space-y-6">
+                    {result.chartData && (
+                        <div>
+                            <h3 className="font-headline text-xl mb-2">Lagna Chart (South Indian Style)</h3>
+                            <LagnaChart chartData={result.chartData} />
+                        </div>
+                    )}
+                    <Separator />
                     <div>
                         <h3 className="font-headline text-xl mb-2">AI Generated Analysis</h3>
                         <div

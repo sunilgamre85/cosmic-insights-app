@@ -140,7 +140,7 @@ export interface Mahadasha {
 /**
  * Calculates the core Kundli data (planetary positions and ascendant).
  */
-export const getKundliData = async ({ date, lat, lon }: KundliInput): Promise<{ascendant: {degree: number, sign: string}, planets: PlanetData[]}> => {
+export const getKundliData = async ({ date, lat, lon }: KundliInput): Promise<{ascendant: {degree: number, sign: string}, planets: PlanetData[], houseSigns: string[]}> => {
   try {
     const year = date.getUTCFullYear();
     const month = date.getUTCMonth() + 1;
@@ -190,12 +190,15 @@ export const getKundliData = async ({ date, lat, lon }: KundliInput): Promise<{a
         };
     });
     
+    const houseSigns = houseCusps.map(cusp => getSign(cusp));
+
     return {
       ascendant: {
         degree: parseFloat(ascendantDegree.toFixed(2)),
         sign: getSign(ascendantDegree)
       },
       planets: planetPositions,
+      houseSigns,
     };
 
   } catch (error) {
@@ -230,13 +233,14 @@ export const getVedicYogasAndDoshas = (planets: PlanetData[], ascendantSign: str
     if (jupiter && moon) {
         const moonHouse = moon.house;
         const jupiterHouse = jupiter.house;
-        const relativeHouse = (jupiterHouse - moonHouse + 12) % 12; // 0 for same house, 1 for next etc.
-        // Kendra from a house are the 1st, 4th, 7th, 10th houses from it.
-        // Relative houses will be 0, 3, 6, 9.
-        if ([0, 3, 6, 9].includes(relativeHouse)) {
+        // This logic calculates house distance. Kendra means houses 1, 4, 7, 10 from a point.
+        // If Moon is in house `m` and Jupiter in `j`, distance is `(j - m + 12) % 12`.
+        // 1st from moon = same house (dist 0), 4th = (dist 3), 7th = (dist 6), 10th = (dist 9).
+        const relativeHouseDistance = (jupiterHouse - moonHouse + 12) % 12;
+        if ([0, 3, 6, 9].includes(relativeHouseDistance)) {
              results.push({
                 name: "Gaj Kesari Yoga",
-                description: `Present because Jupiter is in a Kendra house (${(relativeHouse)+1}) from the Moon.`
+                description: `Present because Jupiter is in a Kendra house from the Moon.`
             });
         }
     }

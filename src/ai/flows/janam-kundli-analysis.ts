@@ -22,13 +22,23 @@ const JanamKundliAnalysisInputSchema = z.object({
 });
 export type JanamKundliAnalysisInput = z.infer<typeof JanamKundliAnalysisInputSchema>;
 
+const ChartDataSchema = z.object({
+    ascendant: z.string(),
+    houses: z.array(z.object({
+        house: z.number(),
+        sign: z.string(),
+        planets: z.array(z.string()),
+    }))
+});
+
 const JanamKundliAnalysisOutputSchema = z.object({
     report: z.string().describe('A detailed Janam Kundli report including planetary positions, Lagna, Nakshatra, Dasha periods, and their significance.'),
     mahadashas: z.array(z.object({
         dashaLord: z.string(),
         startDate: z.string(),
         endDate: z.string(),
-    })).describe('The calculated Vimshottari Mahadasha periods.')
+    })).describe('The calculated Vimshottari Mahadasha periods.'),
+    chartData: ChartDataSchema.optional().describe('The data required to render the visual birth chart.'),
 });
 export type JanamKundliAnalysisOutput = z.infer<typeof JanamKundliAnalysisOutputSchema>;
 
@@ -115,6 +125,13 @@ const janamKundliAnalysisFlow = ai.defineFlow(
     };
 
     const {output} = await prompt(promptInput);
+
+    // Prepare data for the visual chart
+    const housesForChart = Array.from({ length: 12 }, (_, i) => ({
+        house: i + 1,
+        sign: kundliData.houseSigns[i],
+        planets: kundliData.planets.filter(p => p.house === i + 1).map(p => p.name.substring(0, 2).toUpperCase())
+    }));
     
     return {
         report: output!.report,
@@ -123,6 +140,10 @@ const janamKundliAnalysisFlow = ai.defineFlow(
             startDate: d.startDate,
             endDate: d.endDate,
         })),
+        chartData: {
+            ascendant: kundliData.ascendant.sign,
+            houses: housesForChart
+        }
     };
   }
 );
