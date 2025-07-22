@@ -25,6 +25,7 @@ import {
   Bot,
   Smartphone,
   BookOpen,
+  CalendarDays,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -34,6 +35,7 @@ const menuItems = [
   { href: '/palm-reading', icon: Hand, label: 'Palm Reading' },
   { href: '/numerology', icon: Gem, label: 'Numerology' },
   { href: '/horoscope', icon: Sparkles, label: 'Daily Horoscope' },
+  { href: '/panchang', icon: CalendarDays, label: 'Daily Panchang' },
   { href: '/janam-kundli', icon: Star, label: 'Janam Kundli' },
   { href: '/kundli-matching', icon: HeartHandshake, label: 'Kundli Matching' },
   { href: '/mobile-numerology', icon: Smartphone, label: 'Mobile Numerology' },
