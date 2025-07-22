@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Hand, Gem, Sparkles, Newspaper, Bot, Star, HeartHandshake } from 'lucide-react';
+import { Hand, Gem, Sparkles, Newspaper, Bot, Star, HeartHandshake, Smartphone } from 'lucide-react';
 
 const features = [
   {
@@ -38,6 +38,13 @@ const features = [
     link: '/kundli-matching',
     icon: <HeartHandshake className="h-8 w-8 text-primary" />,
     cta: 'Match Kundlis',
+  },
+  {
+    title: 'Mobile Numerology',
+    description: 'Find out the hidden vibration and secrets behind your mobile number.',
+    link: '/mobile-numerology',
+    icon: <Smartphone className="h-8 w-8 text-primary" />,
+    cta: 'Check Your Number',
   },
   {
     title: 'Astrology Blog',
