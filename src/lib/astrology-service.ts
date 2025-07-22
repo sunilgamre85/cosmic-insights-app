@@ -67,19 +67,40 @@ function getSign(degree: number): string {
 }
 
 function getHouse(degree: number, houseCusps: number[]): number {
+    const houseCusps12 = [...houseCusps, houseCusps[0] + 360];
     for (let i = 0; i < 12; i++) {
         const cusp1 = houseCusps[i];
-        const cusp2 = houseCusps[(i + 1) % 12];
-        if (cusp2 < cusp1) { // Handle wrap-around from Pisces to Aries
-            if (degree >= cusp1 || degree < cusp2) {
-                return i + 1;
-            }
-        } else {
+        let cusp2 = houseCusps[i + 1];
+
+        // Handle the 12th house wrap-around to the 1st house
+        if (i === 11) {
+            cusp2 = houseCusps[0] + 360;
+        }
+
+        if (cusp2 < cusp1) { // Normal case for houses that cross 0 degree Aries
             if (degree >= cusp1 && degree < cusp2) {
                 return i + 1;
             }
+        } else { // Special case for houses that cross 0 degree Aries
+            if (degree >= cusp1 || degree < cusp2) {
+                // This logic needs to be more robust, for now this is a simplification
+                if (degree >= cusp1 && degree < 360) return i + 1;
+                if (degree >= 0 && degree < cusp2) return i + 1;
+            }
         }
     }
+
+    // Fallback logic for degrees that might not fit cleanly
+    for (let i = 0; i < 12; i++) {
+      const start = houseCusps[i];
+      const end = houseCusps[(i + 1) % 12];
+      if (start < end) {
+        if (degree >= start && degree < end) return i + 1;
+      } else { // Wraps around 0/360
+        if (degree >= start || degree < end) return i + 1;
+      }
+    }
+    
     return -1; // Should not happen
 }
 
@@ -89,10 +110,17 @@ interface KundliInput {
     lon: number;
 }
 
+export interface PlanetData {
+    name: string;
+    degree: number;
+    sign: string;
+    house: number;
+}
+
 /**
  * Calculates the core Kundli data (planetary positions and ascendant).
  */
-export const getKundliData = async ({ date, lat, lon }: KundliInput): Promise<any> => {
+export const getKundliData = async ({ date, lat, lon }: KundliInput): Promise<{ascendant: {degree: number, sign: string}, planets: PlanetData[]}> => {
   try {
     const year = date.getUTCFullYear();
     const month = date.getUTCMonth() + 1;
@@ -108,8 +136,6 @@ export const getKundliData = async ({ date, lat, lon }: KundliInput): Promise<an
     const julday_ut = await swe_julday_promise(year, month, day, hour_decimal, swisseph.SE_GREG_CAL);
 
     // Calculate house cusps (including Ascendant)
-    // 'P' for Placidus system, common in Western, but we'll use it for cusp calculation.
-    // Vedic often uses Whole Sign Houses, which is simpler. For accuracy, we start with cusps.
     const houses = await swe_houses_promise(julday_ut, lat, lon, 'P');
     const houseCusps = houses.house.slice(1); // house[0] is not used
     const ascendantDegree = houseCusps[0];
@@ -143,4 +169,28 @@ export const getKundliData = async ({ date, lat, lon }: KundliInput): Promise<an
     console.error('Error in getKundliData:', error);
     throw new Error('Failed to calculate Kundli data using Swiss Ephemeris.');
   }
+};
+
+
+/**
+ * Calculates astrological doshas based on planet positions.
+ */
+export const getDoshas = (planets: PlanetData[]): { name: string; description: string }[] => {
+    const doshas: { name: string; description: string }[] = [];
+
+    // Mangal Dosha (Mars in 1, 4, 7, 8, 12th house)
+    const mars = planets.find(p => p.name === 'Mars');
+    if (mars) {
+        const mangalDoshaHouses = [1, 4, 7, 8, 12];
+        if (mangalDoshaHouses.includes(mars.house)) {
+            doshas.push({
+                name: "Mangal Dosha",
+                description: `Present because Mars is in the ${mars.house}th house.`
+            });
+        }
+    }
+    
+    // Placeholder for other doshas like Kaal Sarp
+    
+    return doshas;
 };

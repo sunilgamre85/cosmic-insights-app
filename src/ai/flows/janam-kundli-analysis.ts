@@ -9,7 +9,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import { getKundliData } from '@/lib/astrology-service';
+import { getKundliData, getDoshas } from '@/lib/astrology-service';
 import {z} from 'genkit';
 
 const JanamKundliAnalysisInputSchema = z.object({
@@ -54,13 +54,20 @@ Calculated Astrological Data:
   {{#each planets}}
   - {{this.name}}: {{this.degree}} degrees in {{this.sign}} (in house {{this.house}})
   {{/each}}
+- Detected Doshas:
+  {{#each doshas}}
+  - {{this.name}}: {{this.description}}
+  {{else}}
+  - No major doshas detected in this preliminary analysis.
+  {{/each}}
+
 
 Based *only* on the provided data, generate a comprehensive Janam Kundli report. The report must include:
 1.  A detailed analysis of the Lagna (Ascendant) and its meaning for the person's personality and life.
 2.  An interpretation of each planet's position in its respective sign and house, and how it influences various aspects of life.
-3.  Based on the planetary positions, identify and explain any significant Yogas or Doshas present in the chart (e.g., Mangal Dosha, Gajakesari Yoga).
+3.  A detailed section on the detected Yogas or Doshas. If 'Mangal Dosha' is present, explain its implications clearly and calmly. Explain which planetary combination caused it based on the data provided.
 4.  Provide a comprehensive analysis of career, health, and relationships based on the chart.
-5.  Suggest simple remedies if any challenging planetary positions are found.
+5.  Suggest simple, practical, and non-superstitious remedies if any challenging planetary positions or doshas are found.
 
 Provide a comprehensive, well-structured, and easy-to-understand report. Your goal is to provide a complete astrological analysis based on the given data.`,
 });
@@ -82,10 +89,12 @@ const janamKundliAnalysisFlow = ai.defineFlow(
     const date = new Date(Date.UTC(year, month - 1, day, hour, minute));
 
     const kundliData = await getKundliData({ date, lat, lon });
+    const doshas = getDoshas(kundliData.planets);
 
     const promptInput = {
         ...input,
-        ...kundliData
+        ...kundliData,
+        doshas
     };
 
     const {output} = await prompt(promptInput);
