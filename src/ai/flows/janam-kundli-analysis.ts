@@ -133,4 +133,9 @@ const janamKundliAnalysisFlow = ai.defineFlow(
         mahadashas: kundliData.mahadashas,
         yogasAndDoshas: kundliData.yogasAndDoshas,
         chartData: {
-             ascendant: kundliData.ascendant
+             ascendant: kundliData.ascendant.sign,
+             houses: housesForChart,
+        },
+    };
+  }
+);
