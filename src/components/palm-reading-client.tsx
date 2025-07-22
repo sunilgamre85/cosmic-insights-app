@@ -12,6 +12,7 @@ import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain
 import { analyzePalm, type AnalyzePalmOutput } from "@/ai/flows/ai-palm-reading";
 import { Separator } from "./ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import React from 'react';
 
 const lineColors = {
     lifeLine: 'stroke-red-500',
@@ -130,7 +131,7 @@ export function PalmReadingClient() {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-lg w-full max-w-2xl mx-auto">
+      <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2"><Upload className="h-6 w-6" /> Upload Your Palm</CardTitle>
           <CardDescription>Upload a clear image of your dominant hand's palm.</CardDescription>
@@ -187,7 +188,7 @@ export function PalmReadingClient() {
       )}
 
       {result && (
-        <Card className="shadow-lg w-full max-w-2xl mx-auto">
+        <Card className="shadow-lg">
             <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> AI Analysis</CardTitle>
             <CardDescription>Hover over a line's analysis to see it highlighted on the image.</CardDescription>
