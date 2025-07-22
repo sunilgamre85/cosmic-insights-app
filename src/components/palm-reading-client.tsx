@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles } from "lucide-react";
 import { analyzePalm, type AnalyzePalmOutput } from "@/ai/flows/ai-palm-reading";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Separator } from "./ui/separator";
 
 
 export function PalmReadingClient() {
@@ -155,23 +155,20 @@ export function PalmReadingClient() {
         <Card className="shadow-lg w-full max-w-2xl mx-auto">
             <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> AI Analysis</CardTitle>
-            <CardDescription>Your personalized palm reading results will appear here.</CardDescription>
+            <CardDescription>Your personalized palm reading results appear below.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <Accordion type="single" collapsible defaultValue="Life Line" className="w-full">
-                {lineDetails.map(detail => (
-                    <AccordionItem value={detail.title} key={detail.title}>
-                    <AccordionTrigger className="font-headline text-lg hover:no-underline">
-                        <div className="flex items-center">
+            <CardContent className="space-y-6">
+                 {lineDetails.map((detail, index) => (
+                    <div key={detail.title}>
+                        <h3 className="font-headline text-xl flex items-center gap-2">
                             {detail.icon} {detail.title}
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="text-base">
-                        {detail.content}
-                    </AccordionContent>
-                    </AccordionItem>
+                        </h3>
+                        <p className="mt-2 text-base text-foreground/90 pl-7">
+                            {detail.content}
+                        </p>
+                        {index < lineDetails.length - 1 && <Separator className="mt-6" />}
+                    </div>
                 ))}
-                </Accordion>
             </CardContent>
         </Card>
       )}
