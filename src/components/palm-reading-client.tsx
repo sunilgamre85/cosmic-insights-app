@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes, BookCopy } from "lucide-react";
+import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes, BookCopy, User, Briefcase, Shield } from "lucide-react";
 import { analyzePalms, type AnalyzePalmsOutput } from "@/ai/flows/ai-palm-reading";
 import { Separator } from "./ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
@@ -245,6 +245,16 @@ export function PalmReadingClient() {
     );
   }
 
+  const ReportSection = ({ title, content, icon }: { title: string, content: string, icon: React.ReactNode }) => (
+    <div>
+        <h3 className="font-headline text-2xl flex items-center gap-2 text-primary">
+            {icon} {title}
+        </h3>
+        <p className="mt-2 text-base text-foreground/90 whitespace-pre-wrap">
+            {content}
+        </p>
+    </div>
+  );
 
   return (
     <div className="space-y-8">
@@ -291,19 +301,21 @@ export function PalmReadingClient() {
             <CardContent className="space-y-8">
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                     {result.leftHandAnalysis && <AnalysisDisplay analysis={result.leftHandAnalysis} handTitle="Left Hand (Potential)" previewUrl={leftPreviewUrl} />}
-                    <Separator orientation="vertical" className="hidden md:block h-auto"/>
                     {result.rightHandAnalysis && <AnalysisDisplay analysis={result.rightHandAnalysis} handTitle="Right Hand (Action)" previewUrl={rightPreviewUrl} />}
                 </div>
 
                 <Separator />
-
-                <div>
-                    <h3 className="font-headline text-2xl flex items-center gap-2 text-primary">
-                        <BookCopy className="h-6 w-6" /> Combined Insight
-                    </h3>
-                    <p className="mt-2 text-base text-foreground/90 whitespace-pre-wrap">
-                        {result.combinedInsight}
-                    </p>
+                
+                <div className="space-y-6">
+                    <ReportSection title="Personality Traits" content={result.combinedReport.personalityTraits} icon={<User className="h-6 w-6" />} />
+                    <Separator />
+                    <ReportSection title="Love & Relationships" content={result.combinedReport.loveAndRelationships} icon={<Heart className="h-6 w-6" />} />
+                    <Separator />
+                    <ReportSection title="Career & Success" content={result.combinedReport.careerAndSuccess} icon={<Briefcase className="h-6 w-6" />} />
+                    <Separator />
+                    <ReportSection title="Health & Vitality" content={result.combinedReport.healthAndVitality} icon={<Hand className="h-6 w-6" />} />
+                     <Separator />
+                    <ReportSection title="Warnings & Opportunities" content={result.combinedReport.warningsAndOpportunities} icon={<Shield className="h-6 w-6" />} />
                 </div>
             </CardContent>
         </Card>

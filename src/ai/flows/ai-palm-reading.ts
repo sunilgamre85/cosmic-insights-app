@@ -49,10 +49,18 @@ const SinglePalmAnalysisSchema = z.object({
   generalAnalysis: GeneralAnalysisSchema.optional().describe('General analysis of other important palm features.'),
 });
 
+const CombinedReportSchema = z.object({
+    personalityTraits: z.string().describe("Synthesized analysis of personality traits based on both palms."),
+    loveAndRelationships: z.string().describe("Synthesized analysis regarding love, emotions, and relationships."),
+    careerAndSuccess: z.string().describe("Synthesized analysis on career, ambition, and potential for success."),
+    healthAndVitality: z.string().describe("Synthesized analysis concerning health, energy, and vitality."),
+    warningsAndOpportunities: z.string().describe("Highlights of any special signs, warnings, or unique opportunities visible in the palms."),
+});
+
 const AnalyzePalmsOutputSchema = z.object({
   leftHandAnalysis: SinglePalmAnalysisSchema.describe("The detailed analysis for the left hand, representing potential and innate traits."),
   rightHandAnalysis: SinglePalmAnalysisSchema.describe("The detailed analysis for the right hand, representing actions and current life path."),
-  combinedInsight: z.string().describe("A synthesized analysis comparing and contrasting the two hands to provide a complete, holistic reading."),
+  combinedReport: CombinedReportSchema.describe("A synthesized, structured report comparing and contrasting the two hands to provide a complete, holistic reading."),
   error: z.string().optional().describe('An error message if the palms could not be analyzed.'),
 });
 export type AnalyzePalmsOutput = z.infer<typeof AnalyzePalmsOutputSchema>;
@@ -73,31 +81,34 @@ const prompt = ai.definePrompt({
 Left Palm (Potential & Karma): {{media url=leftHandPhoto}}
 Right Palm (Action & Current Life): {{media url=rightHandPhoto}}
 
-Your analysis must be comprehensive. Please perform the following steps for EACH HAND:
+Your analysis must be comprehensive. Please perform the following steps:
 
-1.  **Identify and Analyze Major Lines:**
+PART 1: INDIVIDUAL HAND ANALYSIS
+For EACH HAND (Left and Right) separately:
+1.  **Analyze General Features:**
+    *   Analyze the overall hand shape (classify as Earth, Air, Fire, or Water hand and explain the meaning).
+    *   Analyze the prominent mounts, especially the Mounts of Venus, Jupiter, and Saturn, and describe their implications for the person's character and life.
+2.  **Identify and Analyze Major Lines:**
     *   Identify and analyze the major palm lines visible in the image: Life Line, Heart Line, Head Line. These three lines are almost always present.
     *   Also, identify and analyze the Fate Line and the Sun Line (also called the Apollo Line) IF they are clearly visible. If they are not visible or are very faint, do not include them in the analysis for that hand.
-
-2.  **Provide Line Coordinates:**
+3.  **Provide Line Coordinates:**
     *   For each line you positively identify, you MUST provide the coordinates for its path.
     *   The path should be an array of {x, y} points.
     *   The coordinates must be normalized, ranging from 0.0 to 1.0, where (0,0) is the top-left corner and (1,1) is the bottom-right corner of the image.
     *   Trace each line from its start to its end with a reasonable number of points (e.g., 5-10 points) to capture its curve accurately.
 
-3.  **Analyze General Features:**
-    *   Provide an analysis of the overall hand shape (e.g., classify as Earth, Air, Fire, or Water hand and explain the meaning).
-    *   Analyze the prominent mounts, especially the Mounts of Venus, Jupiter, and Saturn, and describe their implications for the person's character and life.
+PART 2: COMBINED REPORT
+After analyzing both hands individually, create a **Combined Report**. Compare and contrast the left hand (potential) with the right hand (action). Synthesize all the information from both palms into a holistic, structured report with the following sections:
+- **personalityTraits:** Describe the user's overall personality, character, strengths, and weaknesses.
+- **loveAndRelationships:** Provide insights into their emotional nature, romantic life, and partnerships.
+- **careerAndSuccess:** Analyze their ambition, work ethic, potential for fame, and career path.
+- **healthAndVitality:** Discuss their overall energy levels, constitution, and any potential health indicators from the life line.
+- **warningsAndOpportunities:** Point out any significant karmic lessons, unique strengths, or areas needing caution.
 
-After analyzing both hands individually, create a **Combined Insight**:
-*   Compare and contrast the left hand (potential) with the right hand (action).
-*   Highlight key differences and what they mean for the person's life journey. For example, "Your left hand shows a strong creative potential (Sun Line), while your right hand's practical Fate Line indicates you've channeled this into a stable career. This suggests you have successfully manifested your innate talents."
-*   Provide a holistic summary and advice based on the complete picture from both palms.
+PART 3: ERROR HANDLING
+*   If you cannot clearly identify the palm or its lines from an image, set the 'error' field with a helpful message like "The image for the [left/right] hand is unclear. Please provide a clear, well-lit photo of a palm." In this case, do not attempt to provide an analysis for the unclear hand.
 
-4.  **Error Handling:**
-    *   If you cannot clearly identify the palm or its lines from an image, set the 'error' field with a helpful message like "The image for the [left/right] hand is unclear. Please provide a clear, well-lit photo of a palm." In this case, do not attempt to provide an analysis for the unclear hand.
-
-Return the full analysis for both hands, all coordinate paths, and the combined insight in the requested JSON format.`,
+Return the full analysis for both hands, all coordinate paths, and the final structured report in the requested JSON format.`,
 });
 
 const analyzePalmsFlow = ai.defineFlow(
