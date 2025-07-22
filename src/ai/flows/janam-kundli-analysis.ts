@@ -9,7 +9,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import { getKundliData, type Mahadasha } from '@/lib/astrology-service';
+import { getKundliData } from '@/lib/astrology-service';
 import {z} from 'genkit';
 
 const JanamKundliAnalysisInputSchema = z.object({
@@ -103,13 +103,8 @@ const janamKundliAnalysisFlow = ai.defineFlow(
   },
   async (input): Promise<JanamKundliAnalysisOutput> => {
     
-    const [year, month, day] = input.dateOfBirth.split('-').map(Number);
-    const [hour, minute] = input.timeOfBirth.split(':').map(Number);
-    
-    const birthDateObj = new Date(Date.UTC(year, month - 1, day, hour, minute));
-
     // Get calculated data from our astrology service
-    const kundliData = await getKundliData({ date: birthDateObj, timeOfBirth: input.timeOfBirth, placeOfBirth: input.placeOfBirth });
+    const kundliData = await getKundliData({ dob: input.dateOfBirth, tob: input.timeOfBirth, placeOfBirth: input.placeOfBirth });
 
     const promptInput = {
         ...input,
@@ -124,12 +119,12 @@ const janamKundliAnalysisFlow = ai.defineFlow(
     // Prepare data for the visual chart
     const housesForChart = Array.from({ length: 12 }, (_, i) => {
         const houseNumber = i + 1;
-        const houseData = kundliData.planets.filter(p => p.house === houseNumber);
+        const houseData = kundliData.planets.filter((p: any) => p.house === houseNumber);
         const houseSign = kundliData.houseSigns[i]; // This assumes houseSigns is ordered 1-12
         return {
             house: houseNumber,
             sign: houseSign,
-            planets: houseData.map(p => p.name.substring(0, 2).toUpperCase())
+            planets: houseData.map((p: any) => p.name.substring(0, 2).toUpperCase())
         };
     });
     
@@ -138,9 +133,4 @@ const janamKundliAnalysisFlow = ai.defineFlow(
         mahadashas: kundliData.mahadashas,
         yogasAndDoshas: kundliData.yogasAndDoshas,
         chartData: {
-             ascendant: kundliData.ascendant.sign,
-             houses: housesForChart
-        }
-    };
-  }
-);
+             ascendant: kundliData.ascendant
