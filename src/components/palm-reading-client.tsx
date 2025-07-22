@@ -170,7 +170,7 @@ export function PalmReadingClient() {
     ] : [];
 
     return (
-        <div className="space-y-4 flex-1 min-w-[300px]">
+        <div className="space-y-4">
             <h3 className="font-headline text-2xl text-center">{handTitle}</h3>
             {previewUrl && (
                 <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
@@ -285,10 +285,11 @@ export function PalmReadingClient() {
             <CardDescription>Left hand shows potential, right hand shows action. See the full story below.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
-                <div className="flex flex-col md:flex-row gap-8">
-                    {result.leftHandAnalysis && <AnalysisDisplay analysis={result.leftHandAnalysis} handTitle="Left Hand (Potential)" previewUrl={leftPreviewUrl} />}
-                    {result.rightHandAnalysis && <AnalysisDisplay analysis={result.rightHandAnalysis} handTitle="Right Hand (Action)" previewUrl={rightPreviewUrl} />}
-                </div>
+                {result.leftHandAnalysis && <AnalysisDisplay analysis={result.leftHandAnalysis} handTitle="Left Hand (Potential)" previewUrl={leftPreviewUrl} />}
+                
+                <Separator />
+                
+                {result.rightHandAnalysis && <AnalysisDisplay analysis={result.rightHandAnalysis} handTitle="Right Hand (Action)" previewUrl={rightPreviewUrl} />}
 
                 <Separator />
 
