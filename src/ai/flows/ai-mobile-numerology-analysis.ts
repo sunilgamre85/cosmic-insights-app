@@ -14,6 +14,7 @@ const AiMobileNumerologyAnalysisInputSchema = z.object({
   name: z.string().describe("The user's full name."),
   dateOfBirth: z.string().describe("The user's date of birth (YYYY-MM-DD)."),
   mobileNumber: z.string().describe("The user's mobile number."),
+  language: z.string().optional().describe("The language for the analysis (e.g., 'English', 'Hindi')."),
 });
 export type AiMobileNumerologyAnalysisInput = z.infer<typeof AiMobileNumerologyAnalysisInputSchema>;
 
@@ -37,6 +38,8 @@ const prompt = ai.definePrompt({
   },
   prompt: `You are an expert numerologist. Your task is to analyze a person's mobile number and determine its compatibility with their core numerology numbers (Life Path and Destiny Number).
 
+You MUST provide the entire analysis in the following language: {{{language}}}
+
 User Details:
 - Name: {{{name}}}
 - Date of Birth: {{{dateOfBirth}}}
@@ -59,7 +62,10 @@ const aiMobileNumerologyAnalysisFlow = ai.defineFlow(
     outputSchema: AiMobileNumerologyAnalysisOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt({
+        ...input,
+        language: input.language || 'English',
+    });
     return output!;
   }
 );

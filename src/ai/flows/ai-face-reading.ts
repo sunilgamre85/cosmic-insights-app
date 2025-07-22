@@ -17,6 +17,7 @@ const AnalyzeFaceInputSchema = z.object({
     .describe(
       "A clear, front-facing photo of a person's face, as a data URI that must include a MIME type and use Base64 encoding."
     ),
+  language: z.string().optional().describe("The language for the analysis (e.g., 'English', 'Hindi')."),
 });
 export type AnalyzeFaceInput = z.infer<typeof AnalyzeFaceInputSchema>;
 
@@ -45,6 +46,8 @@ const prompt = ai.definePrompt({
   },
   prompt: `You are an expert in physiognomy (face reading). Your task is to analyze the provided photo of a person's face and generate a unique, specific analysis based ONLY on the features in that image. Do not use generic statements.
 
+You MUST provide the entire analysis in the following language: {{{language}}}
+
 Photo: {{media url=photoDataUri}}
 
 Provide a detailed analysis for each of the following facial features based on what you see in the specific photo provided. Be insightful, positive, and encouraging.
@@ -67,7 +70,10 @@ const analyzeFaceFlow = ai.defineFlow(
     outputSchema: AnalyzeFaceOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt({
+        ...input,
+        language: input.language || 'English',
+    });
     if (!output) {
       throw new Error("The AI model failed to return a valid analysis. The image might be unclear or not contain a face.");
     }

@@ -18,6 +18,7 @@ import { CalendarIcon, Loader2, Smartphone, Wand2 } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { useUserInput } from "@/context/UserInputContext";
 import { aiMobileNumerologyAnalysis, type AiMobileNumerologyAnalysisOutput } from "@/ai/flows/ai-mobile-numerology-analysis";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 const formSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
@@ -25,6 +26,7 @@ const formSchema = z.object({
     required_error: "A date of birth is required.",
   }),
   mobileNumber: z.string().min(10, "Please enter a valid 10-digit mobile number.").max(15, "Please enter a valid mobile number."),
+  language: z.string(),
 });
 
 export function MobileNumerologyClient() {
@@ -40,6 +42,7 @@ export function MobileNumerologyClient() {
       name: userDetails.name || "",
       dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
       mobileNumber: "",
+      language: "English",
     },
   });
 
@@ -48,6 +51,7 @@ export function MobileNumerologyClient() {
       name: userDetails.name || "",
       dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
       mobileNumber: form.getValues("mobileNumber") || "",
+      language: form.getValues("language") || "English",
     });
   }, [userDetails, form]);
 
@@ -63,6 +67,7 @@ export function MobileNumerologyClient() {
         name: values.name,
         dateOfBirth: format(values.dateOfBirth, "yyyy-MM-dd"),
         mobileNumber: values.mobileNumber,
+        language: values.language,
       });
       setResult(analysisResult);
     } catch (error) {
@@ -160,6 +165,27 @@ export function MobileNumerologyClient() {
                   </FormItem>
                 )}
               />
+               <FormField
+                  control={form.control}
+                  name="language"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Analysis Language</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select language" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="English">English</SelectItem>
+                          <SelectItem value="Hindi">Hindi</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...</>

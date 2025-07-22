@@ -24,6 +24,7 @@ const AnalyzePalmsInputSchema = z.object({
     .describe(
       "A photo of the user's right palm, as a data URI that must include a MIME type and use Base64 encoding."
     ),
+  language: z.string().optional().describe("The language for the analysis (e.g., 'English', 'Hindi')."),
 });
 export type AnalyzePalmsInput = z.infer<typeof AnalyzePalmsInputSchema>;
 
@@ -82,6 +83,8 @@ const prompt = ai.definePrompt({
   },
   prompt: `You are an expert palm reader with an exceptional ability to differentiate between left and right hands. Your task is to analyze the user's provided palm images and deliver a comprehensive reading.
 
+You MUST provide the entire analysis in the following language: {{{language}}}
+
 The user has provided the following images:
 {{#if leftHandPhoto}}Left Palm (Represents potential & innate traits): {{media url=leftHandPhoto}}{{/if}}
 {{#if rightHandPhoto}}Right Palm (Represents action & current life): {{media url=rightHandPhoto}}{{/if}}
@@ -134,7 +137,10 @@ const analyzePalmsFlow = ai.defineFlow(
     if (!input.leftHandPhoto && !input.rightHandPhoto) {
         return { error: "Please upload at least one palm image for analysis." };
     }
-    const {output} = await prompt(input);
+    const {output} = await prompt({
+        ...input,
+        language: input.language || 'English',
+    });
     if (!output) {
         throw new Error("The AI model failed to return a valid analysis. The image might be unclear.");
     }

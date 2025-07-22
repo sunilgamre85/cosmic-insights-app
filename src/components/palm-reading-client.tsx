@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import html2pdf from 'html2pdf.js';
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 type SinglePalmAnalysis = AnalyzePalmsOutput['leftHandAnalysis'];
 type AnalysisMode = 'left' | 'right' | 'both';
@@ -83,6 +84,7 @@ export function PalmReadingClient() {
   const [highlightedLine, setHighlightedLine] = useState<string | null>(null);
   const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('both');
   const [activeTab, setActiveTab] = useState("upload");
+  const [language, setLanguage] = useState("English");
   const reportRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -286,6 +288,7 @@ export function PalmReadingClient() {
         const analysisResult = await analyzePalms({ 
             leftHandPhoto: analysisMode !== 'right' ? leftPreviewUrl! : undefined,
             rightHandPhoto: analysisMode !== 'left' ? rightPreviewUrl! : undefined,
+            language: language,
         });
         
         if (analysisResult.error) {
@@ -564,6 +567,18 @@ export function PalmReadingClient() {
             </TabsContent>
 
             <CardContent>
+                <div className="space-y-2">
+                    <Label>Analysis Language</Label>
+                    <Select value={language} onValueChange={setLanguage}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select language" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="English">English</SelectItem>
+                            <SelectItem value="Hindi">Hindi</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
                  <div className="mt-4">
                     <Button onClick={handleAnalyze} disabled={isAnalyzeDisabled} className="w-full">
                     {isLoading ? (
@@ -652,4 +667,3 @@ export function PalmReadingClient() {
     </div>
   );
 }
-

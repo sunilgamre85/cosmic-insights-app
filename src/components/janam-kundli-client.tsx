@@ -33,6 +33,7 @@ const formSchema = z.object({
   hourOfBirth: z.string({ required_error: "Please select an hour." }),
   minuteOfBirth: z.string({ required_error: "Please select a minute." }),
   placeOfBirth: z.string().min(2, "Please enter a valid place of birth."),
+  language: z.string(),
 });
 
 export function JanamKundliClient() {
@@ -50,6 +51,7 @@ export function JanamKundliClient() {
       hourOfBirth: "12",
       minuteOfBirth: "00",
       placeOfBirth: "Delhi, India",
+      language: "English",
     },
   });
 
@@ -60,6 +62,7 @@ export function JanamKundliClient() {
       hourOfBirth: form.getValues("hourOfBirth") || "12",
       minuteOfBirth: form.getValues("minuteOfBirth") || "00",
       placeOfBirth: form.getValues("placeOfBirth") || "Delhi, India",
+      language: form.getValues("language") || "English",
     });
   }, [userDetails, form]);
 
@@ -76,6 +79,7 @@ export function JanamKundliClient() {
         dateOfBirth: format(values.dateOfBirth, "yyyy-MM-dd"),
         timeOfBirth: `${values.hourOfBirth}:${values.minuteOfBirth}`,
         placeOfBirth: values.placeOfBirth,
+        language: values.language,
       });
       setResult(analysisResult);
     } catch (error) {
@@ -218,6 +222,27 @@ export function JanamKundliClient() {
                   </FormItem>
                 )}
               />
+               <FormField
+                  control={form.control}
+                  name="language"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Report Language</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select language" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="English">English</SelectItem>
+                          <SelectItem value="Hindi">Hindi</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? (
                   <>

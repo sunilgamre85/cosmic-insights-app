@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { tarotCardReading, type TarotCardReadingOutput } from "@/ai/flows/tarot-card-reading";
 import type { TarotCard } from "@/lib/astrology-data";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Label } from "./ui/label";
 
 const shuffle = (array: TarotCard[]) => {
   let currentIndex = array.length, randomIndex;
@@ -24,6 +26,7 @@ export function TarotReadingClient({ cards }: { cards: TarotCard[] }) {
   const [drawnCards, setDrawnCards] = useState<TarotCard[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<TarotCardReadingOutput | null>(null);
+  const [language, setLanguage] = useState("English");
   const { toast } = useToast();
 
   const handleDraw = () => {
@@ -41,6 +44,7 @@ export function TarotReadingClient({ cards }: { cards: TarotCard[] }) {
         card1: drawnCards[0].name,
         card2: drawnCards[1].name,
         card3: drawnCards[2].name,
+        language: language,
       });
       setResult(analysisResult);
     } catch (error) {
@@ -80,13 +84,27 @@ export function TarotReadingClient({ cards }: { cards: TarotCard[] }) {
         </AnimatePresence>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row items-center gap-4">
         <Button onClick={handleDraw} size="lg" disabled={isLoading}>Draw Cards</Button>
         {drawnCards.length > 0 && (
-          <Button onClick={handleAnalysis} size="lg" disabled={isLoading} variant="outline">
-            {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 className="mr-2"/>}
-            Interpret Reading
-          </Button>
+          <>
+            <div className="flex items-center gap-2">
+                <Label htmlFor="language-select">Language:</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                    <SelectTrigger id="language-select" className="w-[120px]">
+                        <SelectValue placeholder="Language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="English">English</SelectItem>
+                        <SelectItem value="Hindi">Hindi</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+            <Button onClick={handleAnalysis} size="lg" disabled={isLoading} variant="outline">
+                {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 className="mr-2"/>}
+                Interpret Reading
+            </Button>
+          </>
         )}
       </div>
 

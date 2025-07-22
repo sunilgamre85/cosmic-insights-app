@@ -14,6 +14,8 @@ import { aiChat, type AiChatOutput } from "@/ai/flows/ai-chat";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Label } from "./ui/label";
 
 const formSchema = z.object({
   message: z.string().min(1, "Message cannot be empty."),
@@ -27,6 +29,7 @@ type Message = {
 export function ChatClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [language, setLanguage] = useState("English");
   const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -55,6 +58,7 @@ export function ChatClient() {
     try {
       const chatResult: AiChatOutput = await aiChat({
         message: values.message,
+        language: language,
       });
       const assistantMessage: Message = {
         role: "assistant",
@@ -76,6 +80,20 @@ export function ChatClient() {
 
   return (
     <div className="flex flex-col flex-grow h-full max-h-[calc(100vh-200px)] border rounded-lg shadow-lg">
+      <div className="p-4 border-b">
+         <div className="w-full max-w-[200px]">
+            <Label>Response Language</Label>
+            <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Hindi">Hindi</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+      </div>
       <ScrollArea className="flex-grow p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.length === 0 && (

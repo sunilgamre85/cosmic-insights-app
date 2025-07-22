@@ -14,6 +14,7 @@ import {z} from 'genkit';
 const AiNumerologyAnalysisInputSchema = z.object({
   name: z.string().describe('The name of the person.'),
   dateOfBirth: z.string().describe('The date of birth of the person (YYYY-MM-DD).'),
+  language: z.string().optional().describe("The language for the analysis (e.g., 'English', 'Hindi')."),
 });
 export type AiNumerologyAnalysisInput = z.infer<typeof AiNumerologyAnalysisInputSchema>;
 
@@ -71,6 +72,8 @@ const prompt = ai.definePrompt({
   },
   prompt: `You are an expert numerologist. Analyze the numerology of the person based on their name and date of birth.
 
+You MUST provide the entire analysis in the following language: {{{language}}}
+
 Name: {{{name}}}
 Date of Birth: {{{dateOfBirth}}}
 Current Year: ${new Date().getFullYear()}
@@ -101,7 +104,10 @@ const aiNumerologyAnalysisFlow = ai.defineFlow(
     outputSchema: AiNumerologyAnalysisOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt({
+        ...input,
+        language: input.language || 'English',
+    });
     return output!;
   }
 );

@@ -19,12 +19,14 @@ import { aiNumerologyAnalysis, type AiNumerologyAnalysisOutput } from "@/ai/flow
 import { Separator } from "./ui/separator";
 import { Badge } from "./ui/badge";
 import { useUserInput } from "@/context/UserInputContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 const formSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
   dateOfBirth: z.date({
     required_error: "A date of birth is required.",
   }),
+  language: z.string(),
 });
 
 export function NumerologyClient() {
@@ -39,6 +41,7 @@ export function NumerologyClient() {
     defaultValues: {
       name: userDetails.name || "",
       dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
+      language: "English",
     },
   });
 
@@ -46,6 +49,7 @@ export function NumerologyClient() {
     form.reset({
       name: userDetails.name || "",
       dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
+      language: form.getValues("language") || "English",
     });
   }, [userDetails, form]);
 
@@ -196,6 +200,27 @@ export function NumerologyClient() {
                   </FormItem>
                 )}
               />
+                <FormField
+                  control={form.control}
+                  name="language"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Analysis Language</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select language" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="English">English</SelectItem>
+                          <SelectItem value="Hindi">Hindi</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? (
                   <>

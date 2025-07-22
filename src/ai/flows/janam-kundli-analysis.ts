@@ -17,6 +17,7 @@ const JanamKundliAnalysisInputSchema = z.object({
   dateOfBirth: z.string().describe('The date of birth of the person (YYYY-MM-DD).'),
   timeOfBirth: z.string().describe('The time of birth of the person (HH:MM).'),
   placeOfBirth: z.string().describe('The place of birth of the person (e.g., city, region, country).'),
+  language: z.string().optional().describe("The language for the analysis (e.g., 'English', 'Hindi')."),
 });
 export type JanamKundliAnalysisInput = z.infer<typeof JanamKundliAnalysisInputSchema>;
 
@@ -56,6 +57,8 @@ const prompt = ai.definePrompt({
     temperature: 0.2,
   },
   prompt: `You are an expert Vedic astrologer. Your primary task is to interpret a pre-calculated Janam Kundli (birth chart) and generate a detailed report.
+
+You MUST provide the entire analysis in the following language: {{{language}}}
 
 The user has provided the following details:
 Name: {{{name}}}
@@ -108,6 +111,7 @@ const janamKundliAnalysisFlow = ai.defineFlow(
 
     const promptInput = {
         ...input,
+        language: input.language || 'English',
         ascendant: kundliData.ascendant,
         planets: kundliData.planets,
         yogasAndDoshas: kundliData.yogasAndDoshas,

@@ -14,6 +14,7 @@ const TarotCardReadingInputSchema = z.object({
   card1: z.string().describe("The name of the first card, representing the Past."),
   card2: z.string().describe("The name of the second card, representing the Present."),
   card3: z.string().describe("The name of the third card, representing the Future."),
+  language: z.string().optional().describe("The language for the interpretation (e.g., 'English', 'Hindi')."),
 });
 export type TarotCardReadingInput = z.infer<typeof TarotCardReadingInputSchema>;
 
@@ -38,6 +39,8 @@ const prompt = ai.definePrompt({
   },
   prompt: `You are an expert tarot reader. The user has drawn a three-card spread for Past, Present, and Future. Provide a thoughtful and insightful interpretation.
 
+You MUST provide the entire interpretation in the following language: {{{language}}}
+
 - Past Card: {{{card1}}}
 - Present Card: {{{card2}}}
 - Future Card: {{{card3}}}
@@ -53,7 +56,10 @@ const tarotCardReadingFlow = ai.defineFlow(
     outputSchema: TarotCardReadingOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt({
+        ...input,
+        language: input.language || 'English',
+    });
     return output!;
   }
 );

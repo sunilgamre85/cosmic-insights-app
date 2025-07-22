@@ -13,12 +13,14 @@ import { analyzeFace, type AnalyzeFaceOutput } from "@/ai/flows/ai-face-reading"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Separator } from "./ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 export function FaceReadingClient() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalyzeFaceOutput | null>(null);
+  const [language, setLanguage] = useState("English");
   const { toast } = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -128,7 +130,7 @@ export function FaceReadingClient() {
     setIsLoading(true);
     setResult(null);
     try {
-      const analysisResult = await analyzeFace({ photoDataUri: previewUrl });
+      const analysisResult = await analyzeFace({ photoDataUri: previewUrl, language });
       setResult(analysisResult);
     } catch (error) {
       console.error("Analysis failed:", error);
@@ -196,6 +198,18 @@ export function FaceReadingClient() {
                 <h3 className="text-center font-semibold pt-4">Image Preview</h3>
                 <div className="relative w-full max-w-sm mx-auto aspect-square rounded-lg overflow-hidden border">
                     <Image src={previewUrl} alt="Face preview" layout="fill" objectFit="contain" />
+                </div>
+                 <div className="space-y-2">
+                    <Label>Analysis Language</Label>
+                    <Select value={language} onValueChange={setLanguage}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select language" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="English">English</SelectItem>
+                            <SelectItem value="Hindi">Hindi</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
                 <Button onClick={handleAnalyze} disabled={isLoading} className="w-full">
                     {isLoading ? (
