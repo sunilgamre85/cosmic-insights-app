@@ -52,14 +52,22 @@ const lineTextColors = {
 };
 
 const LeftHandOutline = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-muted-foreground">
-        <path d="M18 18.5a4 4 0 0 1-4 0 4 4 0 0 1-4 0 4 4 0 0 1-4 0 4 4 0 0 1-4 0V14a2 2 0 0 1 2-2h1.5a2 2 0 0 1 2 2v1.5a2 2 0 0 0 2 2v-4.5a2 2 0 0 0-2-2v-1.5a2 2 0 1 0-4 0V10a2 2 0 0 0-2 2v1.5a2 2 0 0 0-2 2V12a2 2 0 0 0-2-2V7a2 2 0 1 1 4 0v3a2 2 0 0 0 2 2h1.5a2 2 0 0 0 2-2V8.5a2 2 0 1 0-4 0V10a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2v-5.5a2 2 0 0 0-2-2V6a2 2 0 1 0-4 0v.5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2V5a2 2 0 1 0-4 0v1.5a2 2 0 0 0-2 2v7.5a4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0 4-4 4 4 0 0 0 4-4V8a2 2 0 1 1 4 0v10.5a4 4 0 0 1-4 4 4 4 0 0 1-4-4Z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-24 h-24 text-muted-foreground">
+        <path d="M56.5,111.5 C56.5,111.5 19,108.5 19,82.5 C19,56.5 28,45.5 35.5,39.5 C43,33.5 48.5,33.5 48.5,23.5 C48.5,13.5 43,2.5 50,2.5 C57,2.5 61.5,13.5 61.5,23.5 C61.5,33.5 68,34.5 73,40.5 C78,46.5 86,54.5 86,81.5 C86,108.5 56.5,111.5 56.5,111.5 Z" stroke="currentColor" fill="none"/>
+        <path d="M48.5,22.5 C48.5,22.5 49,27.5 45.5,29.5" stroke="currentColor" fill="none"/>
+        <path d="M35.5,39.5 C35.5,39.5 31,43.5 33,47.5" stroke="currentColor" fill="none"/>
+        <path d="M61.5,22.5 C61.5,22.5 61,27.5 64.5,29.5" stroke="currentColor" fill="none"/>
+        <path d="M73,40.5 C73,40.5 77.5,43.5 75.5,47.5" stroke="currentColor" fill="none"/>
     </svg>
 );
 
 const RightHandOutline = () => (
-     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="w-16 h-16 text-muted-foreground -scale-x-100">
-        <path d="M18 18.5a4 4 0 0 1-4 0 4 4 0 0 1-4 0 4 4 0 0 1-4 0 4 4 0 0 1-4 0V14a2 2 0 0 1 2-2h1.5a2 2 0 0 1 2 2v1.5a2 2 0 0 0 2 2v-4.5a2 2 0 0 0-2-2v-1.5a2 2 0 1 0-4 0V10a2 2 0 0 0-2 2v1.5a2 2 0 0 0-2 2V12a2 2 0 0 0-2-2V7a2 2 0 1 1 4 0v3a2 2 0 0 0 2 2h1.5a2 2 0 0 0 2-2V8.5a2 2 0 1 0-4 0V10a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2v-5.5a2 2 0 0 0-2-2V6a2 2 0 1 0-4 0v.5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h3a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2V5a2 2 0 1 0-4 0v1.5a2 2 0 0 0-2 2v7.5a4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0 4-4 4 4 0 0 0 4-4V8a2 2 0 1 1 4 0v10.5a4 4 0 0 1-4 4 4 4 0 0 1-4-4Z"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-24 h-24 text-muted-foreground">
+        <path d="M63.5,111.5 C63.5,111.5 101,108.5 101,82.5 C101,56.5 92,45.5 84.5,39.5 C77,33.5 71.5,33.5 71.5,23.5 C71.5,13.5 77,2.5 70,2.5 C63,2.5 58.5,13.5 58.5,23.5 C58.5,33.5 52,34.5 47,40.5 C42,46.5 34,54.5 34,81.5 C34,108.5 63.5,111.5 63.5,111.5 Z" stroke="currentColor" fill="none"/>
+        <path d="M71.5,22.5 C71.5,22.5 71,27.5 74.5,29.5" stroke="currentColor" fill="none"/>
+        <path d="M84.5,39.5 C84.5,39.5 89,43.5 87,47.5" stroke="currentColor" fill="none"/>
+        <path d="M58.5,22.5 C58.5,22.5 59,27.5 55.5,29.5" stroke="currentColor" fill="none"/>
+        <path d="M47,40.5 C47,40.5 42.5,43.5 44.5,47.5" stroke="currentColor" fill="none"/>
     </svg>
 );
 
