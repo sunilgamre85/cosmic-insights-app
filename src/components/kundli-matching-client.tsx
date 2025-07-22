@@ -15,20 +15,19 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarIcon, Loader2, HeartHandshake, User, Users } from "lucide-react";
-import { kundliMatchingAnalysis, type KundliMatchingAnalysisOutput } from "@/ai/flows/kundli-matching-analysis";
+import { matchKundli, type GunaScore, type KundliProfile } from "@/lib/kundli-matching";
 import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
 import { useUserInput } from "@/context/UserInputContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { Progress } from "./ui/progress";
 
 const personSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
   dateOfBirth: z.date({
     required_error: "A date of birth is required.",
   }),
-  hourOfBirth: z.string({ required_error: "Please select an hour." }),
-  minuteOfBirth: z.string({ required_error: "Please select a minute." }),
-  placeOfBirth: z.string().min(2, "Please enter a valid place of birth."),
 });
 
 const formSchema = z.object({
@@ -36,9 +35,14 @@ const formSchema = z.object({
   person2: personSchema,
 });
 
+type KundliMatchingResult = {
+    total: number;
+    details: GunaScore[];
+}
+
 export function KundliMatchingClient() {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<KundliMatchingAnalysisOutput | null>(null);
+  const [result, setResult] = useState<KundliMatchingResult | null>(null);
   const [person1CalendarOpen, setPerson1CalendarOpen] = useState(false);
   const [person2CalendarOpen, setPerson2CalendarOpen] = useState(false);
   const { toast } = useToast();
@@ -50,15 +54,9 @@ export function KundliMatchingClient() {
       person1: { 
         name: userDetails.name || "", 
         dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth) : undefined,
-        hourOfBirth: "12",
-        minuteOfBirth: "00", 
-        placeOfBirth: "London, UK" 
       },
       person2: { 
         name: "",
-        hourOfBirth: "12", 
-        minuteOfBirth: "00",
-        placeOfBirth: "New York, USA" 
       },
     },
   });
@@ -79,27 +77,31 @@ export function KundliMatchingClient() {
     setIsLoading(true);
     setResult(null);
     try {
-      // Save person 1's details if they seem to be the primary user
-      if (values.person1.name && values.person1.dateOfBirth) {
-        setUserDetails({
-            name: values.person1.name,
-            dateOfBirth: values.person1.dateOfBirth.toISOString(),
-        });
-      }
+      // In a real app, you would first calculate the nakshatra, rashi etc. from the birth details.
+      // For now, we'll use mock data to demonstrate the matching logic.
+      const boy: KundliProfile = {
+        name: values.person1.name,
+        dob: format(values.person1.dateOfBirth, "yyyy-MM-dd"),
+        gender: "male",
+        nakshatra: "Rohini", // Mock
+        rashi: "Vrishabha", // Mock
+        nadi: "Adi", // Mock
+        gana: "Deva", // Mock
+      };
       
-      const analysisResult = await kundliMatchingAnalysis({
-        person1: {
-          ...values.person1,
-          dateOfBirth: format(values.person1.dateOfBirth, "yyyy-MM-dd"),
-          timeOfBirth: `${values.person1.hourOfBirth}:${values.person1.minuteOfBirth}`,
-        },
-        person2: {
-          ...values.person2,
-          dateOfBirth: format(values.person2.dateOfBirth, "yyyy-MM-dd"),
-          timeOfBirth: `${values.person2.hourOfBirth}:${values.person2.minuteOfBirth}`,
-        },
-      });
+      const girl: KundliProfile = {
+        name: values.person2.name,
+        dob: format(values.person2.dateOfBirth, "yyyy-MM-dd"),
+        gender: "female",
+        nakshatra: "Mrigashira", // Mock
+        rashi: "Vrishabha", // Mock
+        nadi: "Madhya", // Mock
+        gana: "Deva", // Mock
+      };
+
+      const analysisResult = matchKundli(boy, girl);
       setResult(analysisResult);
+
     } catch (error) {
       console.error("Analysis failed:", error);
       toast({
@@ -112,15 +114,11 @@ export function KundliMatchingClient() {
     }
   }
 
-  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-  const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
-
   const renderPersonFields = (
     person: "person1" | "person2", 
     title: string, 
     isCalendarOpen: boolean, 
-    setCalendarOpen: (open: boolean) => void,
-    defaultPlace: string
+    setCalendarOpen: (open: boolean) => void
   ) => (
     <div className="space-y-4">
       <h3 className="font-headline text-lg flex items-center gap-2"><User /> {title}</h3>
@@ -174,61 +172,6 @@ export function KundliMatchingClient() {
           </FormItem>
         )}
       />
-      <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name={`${person}.hourOfBirth`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Hour</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Hour" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {hours.map(hour => <SelectItem key={hour} value={hour}>{hour}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name={`${person}.minuteOfBirth`}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Minute</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Minute" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {minutes.map(minute => <SelectItem key={minute} value={minute}>{minute}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-      <FormField
-        control={form.control}
-        name={`${person}.placeOfBirth`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Place of Birth</FormLabel>
-            <FormControl>
-              <Input placeholder={defaultPlace} {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
     </div>
   );
 
@@ -243,9 +186,10 @@ export function KundliMatchingClient() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="grid md:grid-cols-2 gap-8">
-                {renderPersonFields("person1", "Person 1", person1CalendarOpen, setPerson1CalendarOpen, "e.g. London, UK")}
-                {renderPersonFields("person2", "Person 2", person2CalendarOpen, setPerson2CalendarOpen, "e.g. New York, USA")}
+                {renderPersonFields("person1", "Person 1", person1CalendarOpen, setPerson1CalendarOpen)}
+                {renderPersonFields("person2", "Person 2", person2CalendarOpen, setPerson2CalendarOpen)}
               </div>
+               <p className="text-xs text-muted-foreground text-center">Note: Astrological details like Rashi and Nakshatra are currently mocked. The calculation logic is for demonstration.</p>
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? (
                   <>
@@ -282,19 +226,35 @@ export function KundliMatchingClient() {
             </div>
           )}
           {result && (
+            <ScrollArea className="h-[calc(100vh-220px)] w-full pr-4">
             <div className="space-y-4">
                 <div className="text-center">
                     <h3 className="font-headline text-xl">Compatibility Score (Guna Milan)</h3>
-                    <p className="text-5xl font-bold text-primary">{result.compatibilityScore}/36</p>
+                    <p className="text-5xl font-bold text-primary">{result.total}/36</p>
+                    <Progress value={(result.total / 36) * 100} className="mt-2 h-2" />
                 </div>
                 <Separator />
                 <div>
-                  <h4 className="font-headline text-lg">Overall Summary</h4>
-                  <ScrollArea className="h-96 w-full rounded-md border p-4">
-                    <p className="text-base text-foreground/90 whitespace-pre-wrap">{result.summary}</p>
-                  </ScrollArea>
+                  <h4 className="font-headline text-lg mb-2">Detailed Guna Milan Score</h4>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Guna (Koota)</TableHead>
+                                <TableHead className="text-right">Score</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {result.details.map((guna) => (
+                                <TableRow key={guna.guna}>
+                                    <TableCell className="font-medium">{guna.guna}</TableCell>
+                                    <TableCell className="text-right">{guna.score} / {guna.max}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </div>
             </div>
+            </ScrollArea>
           )}
         </CardContent>
       </Card>
