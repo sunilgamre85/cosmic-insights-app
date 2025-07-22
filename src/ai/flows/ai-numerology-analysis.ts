@@ -66,6 +66,9 @@ const prompt = ai.definePrompt({
   name: 'aiNumerologyAnalysisPrompt',
   input: {schema: AiNumerologyAnalysisInputSchema},
   output: {schema: AiNumerologyAnalysisOutputSchema},
+  config: {
+    temperature: 0,
+  },
   prompt: `You are an expert numerologist. Analyze the numerology of the person based on their name and date of birth.
 
 Name: {{{name}}}
