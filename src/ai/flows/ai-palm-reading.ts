@@ -76,12 +76,11 @@ Right Palm (Action & Current Life): {{media url=rightHandPhoto}}
 Your analysis must be comprehensive. Please perform the following steps for EACH HAND:
 
 1.  **Identify and Analyze Major Lines:**
-    *   Identify and analyze the major palm lines visible in the image: Life Line, Heart Line, Head Line.
-    *   Also, identify and analyze the Fate Line and the Sun Line (also called the Apollo Line) if they are present.
-    *   For each line you identify, provide a detailed analysis.
+    *   Identify and analyze the major palm lines visible in the image: Life Line, Heart Line, Head Line. These three lines are almost always present.
+    *   Also, identify and analyze the Fate Line and the Sun Line (also called the Apollo Line) IF they are clearly visible. If they are not visible or are very faint, do not include them in the analysis for that hand.
 
 2.  **Provide Line Coordinates:**
-    *   For each line you identify, you MUST provide the coordinates for its path.
+    *   For each line you positively identify, you MUST provide the coordinates for its path.
     *   The path should be an array of {x, y} points.
     *   The coordinates must be normalized, ranging from 0.0 to 1.0, where (0,0) is the top-left corner and (1,1) is the bottom-right corner of the image.
     *   Trace each line from its start to its end with a reasonable number of points (e.g., 5-10 points) to capture its curve accurately.

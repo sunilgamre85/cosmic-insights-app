@@ -285,11 +285,10 @@ export function PalmReadingClient() {
             <CardDescription>Left hand shows potential, right hand shows action. See the full story below.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
-                {result.leftHandAnalysis && <AnalysisDisplay analysis={result.leftHandAnalysis} handTitle="Left Hand (Potential)" previewUrl={leftPreviewUrl} />}
-                
-                <Separator />
-                
-                {result.rightHandAnalysis && <AnalysisDisplay analysis={result.rightHandAnalysis} handTitle="Right Hand (Action)" previewUrl={rightPreviewUrl} />}
+                <div className="grid md:grid-cols-2 gap-8 items-start">
+                    {result.leftHandAnalysis && <AnalysisDisplay analysis={result.leftHandAnalysis} handTitle="Left Hand (Potential)" previewUrl={leftPreviewUrl} />}
+                    {result.rightHandAnalysis && <AnalysisDisplay analysis={result.rightHandAnalysis} handTitle="Right Hand (Action)" previewUrl={rightPreviewUrl} />}
+                </div>
 
                 <Separator />
 
