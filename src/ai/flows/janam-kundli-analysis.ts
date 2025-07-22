@@ -9,7 +9,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import { getKundliData, getVedicYogasAndDoshas } from '@/lib/astrology-service';
+import { getKundliData, getVedicYogasAndDoshas, getVimshottariDasha, type PlanetData, type Mahadasha } from '@/lib/astrology-service';
 import {z} from 'genkit';
 
 const JanamKundliAnalysisInputSchema = z.object({
@@ -23,7 +23,12 @@ const JanamKundliAnalysisInputSchema = z.object({
 export type JanamKundliAnalysisInput = z.infer<typeof JanamKundliAnalysisInputSchema>;
 
 const JanamKundliAnalysisOutputSchema = z.object({
-    report: z.string().describe('A detailed Janam Kundli report including planetary positions, Lagna, Nakshatra, Dasha periods, and their significance.')
+    report: z.string().describe('A detailed Janam Kundli report including planetary positions, Lagna, Nakshatra, Dasha periods, and their significance.'),
+    mahadashas: z.array(z.object({
+        dashaLord: z.string(),
+        startDate: z.string(),
+        endDate: z.string(),
+    })).describe('The calculated Vimshottari Mahadasha periods.')
 });
 export type JanamKundliAnalysisOutput = z.infer<typeof JanamKundliAnalysisOutputSchema>;
 
@@ -34,7 +39,7 @@ export async function janamKundliAnalysis(input: JanamKundliAnalysisInput): Prom
 const prompt = ai.definePrompt({
   name: 'janamKundliAnalysisPrompt',
   input: {schema: z.any()},
-  output: {schema: JanamKundliAnalysisOutputSchema},
+  output: {schema: z.object({ report: z.string() })}, // AI only generates the report text
   config: {
     temperature: 0.2,
   },
@@ -60,14 +65,19 @@ Calculated Astrological Data:
   {{else}}
   - No major doshas or yogas detected in this preliminary analysis.
   {{/each}}
+- Major Dasha Periods (Vimshottari Mahadasha):
+  {{#each mahadashas}}
+  - {{this.dashaLord}}: from {{this.startDate}} to {{this.endDate}}
+  {{/each}}
 
 
 Based *only* on the provided data, generate a comprehensive Janam Kundli report. The report must include:
 1.  A detailed analysis of the Lagna (Ascendant) and its meaning for the person's personality and life.
 2.  An interpretation of each planet's position in its respective sign and house, and how it influences various aspects of life.
 3.  A detailed section on the detected Yogas or Doshas. For each, explain its implications clearly and calmly. Explain which planetary combination caused it based on the data provided.
-4.  Provide a comprehensive analysis of career, health, and relationships based on the chart.
-5.  Suggest simple, practical, and non-superstitious remedies if any challenging planetary positions or doshas are found.
+4.  A section on the Vimshottari Dasha periods. Briefly explain the general influence of the first 3-4 Mahadasha lords in this person's life based on their planetary positions in the chart.
+5.  Provide a comprehensive analysis of career, health, and relationships based on the chart.
+6.  Suggest simple, practical, and non-superstitious remedies if any challenging planetary positions or doshas are found.
 
 Provide a comprehensive, well-structured, and easy-to-understand report. Your goal is to provide a complete astrological analysis based on the given data.`,
 });
@@ -78,7 +88,7 @@ const janamKundliAnalysisFlow = ai.defineFlow(
     inputSchema: JanamKundliAnalysisInputSchema,
     outputSchema: JanamKundliAnalysisOutputSchema,
   },
-  async input => {
+  async (input): Promise<JanamKundliAnalysisOutput> => {
     // In a real app, you would use a geocoding service to get lat/lon from placeOfBirth
     // For this prototype, we'll use a fixed lat/lon if not provided.
     const lat = input.lat ?? 19.2288; // Default to Kandivali, Mumbai
@@ -86,18 +96,33 @@ const janamKundliAnalysisFlow = ai.defineFlow(
 
     const [year, month, day] = input.dateOfBirth.split('-').map(Number);
     const [hour, minute] = input.timeOfBirth.split(':').map(Number);
-    const date = new Date(Date.UTC(year, month - 1, day, hour, minute));
+    
+    // We need the original birth date for Dasha calculation
+    const birthDateObj = new Date(year, month - 1, day, hour, minute);
 
-    const kundliData = await getKundliData({ date, lat, lon });
-    const yogasAndDoshas = getVedicYogasAndDoshas(kundliData.planets);
+    const kundliData = await getKundliData({ date: birthDateObj, lat, lon });
+    const yogasAndDoshas = getVedicYogasAndDoshas(kundliData.planets, kundliData.ascendant.sign);
+
+    const moon = kundliData.planets.find(p => p.name === 'Moon');
+    if (!moon) throw new Error("Could not calculate Moon's position.");
+    const mahadashas = getVimshottariDasha(moon.degree, birthDateObj);
 
     const promptInput = {
         ...input,
         ...kundliData,
-        yogasAndDoshas
+        yogasAndDoshas,
+        mahadashas
     };
 
     const {output} = await prompt(promptInput);
-    return output!;
+    
+    return {
+        report: output!.report,
+        mahadashas: mahadashas.map(d => ({
+            dashaLord: d.dashaLord,
+            startDate: d.startDate,
+            endDate: d.endDate,
+        })),
+    };
   }
 );

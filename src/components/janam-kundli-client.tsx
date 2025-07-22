@@ -19,6 +19,8 @@ import { janamKundliAnalysis, type JanamKundliAnalysisOutput } from "@/ai/flows/
 import { ScrollArea } from "./ui/scroll-area";
 import { useUserInput } from "@/context/UserInputContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { Separator } from "./ui/separator";
 
 const formSchema = z.object({
   name: z.string().min(2, "Please enter a valid name."),
@@ -249,10 +251,37 @@ export function JanamKundliClient() {
             </div>
           )}
           {result && (
-            <ScrollArea className="h-[500px] w-full rounded-md border p-4">
-                <div
-                    className="prose dark:prose-invert max-w-none text-base text-foreground/90 whitespace-pre-wrap"
-                >{result.report}</div>
+            <ScrollArea className="h-[calc(100vh-220px)] w-full pr-4">
+                <div className="space-y-6">
+                    <div>
+                        <h3 className="font-headline text-xl mb-2">AI Generated Analysis</h3>
+                        <div
+                            className="prose dark:prose-invert max-w-none text-base text-foreground/90 whitespace-pre-wrap p-4 border rounded-lg bg-secondary/30"
+                        >{result.report}</div>
+                    </div>
+                    <Separator />
+                    <div>
+                        <h3 className="font-headline text-xl mb-2">Vimshottari Mahadasha Periods</h3>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Dasha Lord</TableHead>
+                                    <TableHead>Start Date</TableHead>
+                                    <TableHead>End Date</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {result.mahadashas.map((dasha, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell className="font-medium">{dasha.dashaLord}</TableCell>
+                                        <TableCell>{dasha.startDate}</TableCell>
+                                        <TableCell>{dasha.endDate}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
             </ScrollArea>
           )}
         </CardContent>
