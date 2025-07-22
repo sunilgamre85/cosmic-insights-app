@@ -6,13 +6,9 @@ import { getAscendant, getHouses } from './houses';
 import { getJulianDay } from './julian';
 import { getPlanetPositions } from './planet';
 import { getVimshottariDasha } from './vimshottari-dasha';
+import { detectYogas } from './yogas';
 
 // Placeholder for Step 7
-function detectYogas(planets: any, houses: any) {
-    // In the next step, we will implement yoga detection logic.
-    // For now, it returns an empty array.
-    return [];
-}
 
 function getSign(degree: number): string {
     const signs = [
@@ -41,7 +37,7 @@ export async function generateJanamKundli({
   const ascendantDegree = getAscendant(fullDate, lat, lon);
   const ascendantSign = getSign(ascendantDegree);
   const houseCusps = getHouses(ascendantDegree);
-    const houseSigns = Object.fromEntries(
+    const houseSigns: Record<string, string> = Object.fromEntries(
         Object.entries(houseCusps).map(([house, degree]) => [house, getSign(degree)])
     );
 
@@ -55,11 +51,13 @@ export async function generateJanamKundli({
       const siderealLon = applyAyanamsa(tropicalLon, jd);
       
       let house = 1;
+      // This is a simplified house calculation. A more precise system like Placidus would be more complex.
       for (let i = 1; i <= 12; i++) {
           const houseStart = houseCusps[i];
-          const houseEnd = houseCusps[i + 1] || (houseCusps[1] + 330) % 360; // Handle wrap around for 12th house
+          const nextHouse = i === 12 ? 1 : i + 1;
+          const houseEnd = houseCusps[nextHouse];
           
-          if (houseStart < houseEnd) {
+          if (houseStart < houseEnd) { // Normal case
               if (siderealLon >= houseStart && siderealLon < houseEnd) {
                   house = i;
                   break;
@@ -103,3 +101,4 @@ export async function generateJanamKundli({
 
   return kundliJson;
 }
+
