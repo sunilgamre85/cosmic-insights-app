@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes, BookCopy, User, Briefcase, Shield, Download, LifeBuoy, Camera } from "lucide-react";
+import { Upload, Hand, Bot, Wand2, Loader2, FileImage, X, Sparkles, Heart, Brain, AlertTriangle, Sun, Shapes, BookCopy, User, Briefcase, Shield, Download, LifeBuoy, Camera, SwitchCamera } from "lucide-react";
 import { analyzePalms, type AnalyzePalmsOutput } from "@/ai/flows/ai-palm-reading";
 import { Separator } from "./ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
@@ -90,24 +90,68 @@ export function PalmReadingClient() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [captureFor, setCaptureFor] = useState<'left' | 'right'>('left');
-
-  useEffect(() => {
-    // Stop camera stream when component unmounts or tab changes
-    return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
+  
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | undefined>(undefined);
+  
+  const stopCameraStream = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
         (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
+        videoRef.current.srcObject = null;
+    }
+  }
 
-  const startCamera = async () => {
+  const startCamera = async (deviceId?: string) => {
+    stopCameraStream();
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        setHasCameraPermission(true);
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                deviceId: deviceId ? { exact: deviceId } : undefined 
+            } 
+        });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
+      } catch (error) {
+        console.error("Error starting camera:", error);
+        toast({
+          variant: "destructive",
+          title: "Camera Error",
+          description: "Could not start the camera. Please check permissions and try again.",
+        });
+      }
+    }
+  };
+
+  const getCameraPermissionAndDevices = async () => {
+    try {
+        // Dummy request to get permissions
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setHasCameraPermission(true);
+        
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoInputs = devices.filter(device => device.kind === 'videoinput');
+        setVideoDevices(videoInputs);
+        
+        // Prefer rear camera
+        const rearCamera = videoInputs.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
+        const initialDeviceId = rearCamera ? rearCamera.deviceId : videoInputs[0]?.deviceId;
+        setSelectedDeviceId(initialDeviceId);
+        
+        // We close the initial dummy stream immediately
+        stream.getTracks().forEach(track => track.stop());
+
+        // And start the camera with the chosen device
+        if (initialDeviceId) {
+            startCamera(initialDeviceId);
+        } else if (videoInputs.length > 0) {
+            startCamera(videoInputs[0].deviceId);
+        } else {
+             // Fallback to a generic start if no deviceId found but permission granted
+             startCamera();
+        }
+
       } catch (error) {
         console.error("Error accessing camera:", error);
         setHasCameraPermission(false);
@@ -117,25 +161,30 @@ export function PalmReadingClient() {
           description: "Please enable camera permissions in your browser settings to use this feature.",
         });
       }
-    } else {
-      setHasCameraPermission(false);
+  }
+
+  const handleSwitchCamera = () => {
+    if (videoDevices.length > 1) {
+        const currentIndex = videoDevices.findIndex(device => device.deviceId === selectedDeviceId);
+        const nextIndex = (currentIndex + 1) % videoDevices.length;
+        const nextDeviceId = videoDevices[nextIndex].deviceId;
+        setSelectedDeviceId(nextDeviceId);
+        startCamera(nextDeviceId);
     }
   };
-  
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-        (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
-        videoRef.current.srcObject = null;
-    }
-  }
+
+  useEffect(() => {
+    // Stop camera stream when component unmounts or tab changes
+    return () => stopCameraStream();
+  }, []);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setResult(null);
     if (value === 'camera') {
-        startCamera();
+        getCameraPermissionAndDevices();
     } else {
-        stopCamera();
+        stopCameraStream();
     }
   }
   
@@ -465,7 +514,14 @@ export function PalmReadingClient() {
             <TabsContent value="camera" className="px-6 pb-6 space-y-6">
                  <div className="grid md:grid-cols-2 gap-8 items-start">
                     <div className="space-y-4">
-                        <h3 className="font-headline text-lg text-center">Camera View</h3>
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-headline text-lg text-center">Camera View</h3>
+                            {videoDevices.length > 1 && (
+                                <Button onClick={handleSwitchCamera} variant="outline" size="sm">
+                                    <SwitchCamera className="mr-2 h-4 w-4" /> Switch
+                                </Button>
+                            )}
+                        </div>
                         <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-black">
                             <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline></video>
                             {hasCameraPermission === false && (
@@ -596,3 +652,4 @@ export function PalmReadingClient() {
     </div>
   );
 }
+
