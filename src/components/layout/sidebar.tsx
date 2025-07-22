@@ -59,7 +59,7 @@ export function AppSidebar() {
             <SidebarMenu className="flex-1">
                 {menuItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                    <Link href={item.href} legacyBehavior passHref>
+                    <Link href={item.href}>
                         <SidebarMenuButton
                             isActive={isActive(item.href)}
                             tooltip={{
@@ -78,7 +78,7 @@ export function AppSidebar() {
             <SidebarMenu>
                  {adminItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                    <Link href={item.href} legacyBehavior passHref>
+                    <Link href={item.href}>
                         <SidebarMenuButton
                             isActive={isActive(item.href)}
                             tooltip={{
