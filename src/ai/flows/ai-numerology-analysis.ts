@@ -18,9 +18,20 @@ const AiNumerologyAnalysisInputSchema = z.object({
 export type AiNumerologyAnalysisInput = z.infer<typeof AiNumerologyAnalysisInputSchema>;
 
 const AiNumerologyAnalysisOutputSchema = z.object({
-  lifePathNumber: z.number().describe('The life path number.'),
-  destinyNumber: z.number().describe('The destiny number.'),
-  personalityTraits: z.string().describe('Detailed explanation of personality traits based on numerology.'),
+  lifePathNumber: z.number().describe('The Life Path Number, calculated from the date of birth.'),
+  destinyNumber: z.number().describe('The Destiny (or Expression) Number, calculated from the full name.'),
+  soulUrgeNumber: z.number().describe("The Soul Urge Number, calculated from the vowels in the name."),
+  personalityNumber: z.number().describe("The Personality Number, calculated from the consonants in the name."),
+  birthDayNumber: z.number().describe("The Birth Day Number, from the day of the month of birth."),
+  maturityNumber: z.number().describe("The Maturity Number, from the sum of Life Path and Destiny numbers."),
+  personalYearNumber: z.number().describe("The Personal Year Number, based on the date of birth and the current year."),
+  luckyNumbers: z.array(z.number()).describe("A list of lucky numbers for the person."),
+  luckyColor: z.string().describe("A lucky color associated with the person's numbers."),
+  luckyDay: z.string().describe("A lucky day of the week."),
+  luckyGemstone: z.string().describe("A lucky gemstone recommendation."),
+  careerSuggestions: z.string().describe("Career suggestions based on the numerology report."),
+  relationshipCompatibility: z.string().describe("A brief on relationship compatibility based on the numerology report."),
+  detailedAnalysis: z.string().describe('A detailed, comprehensive analysis combining all the numerological aspects.'),
 });
 export type AiNumerologyAnalysisOutput = z.infer<typeof AiNumerologyAnalysisOutputSchema>;
 
@@ -36,13 +47,23 @@ const prompt = ai.definePrompt({
 
 Name: {{{name}}}
 Date of Birth: {{{dateOfBirth}}}
+Current Year: ${new Date().getFullYear()}
 
-Calculate the life path number and destiny number. Provide a detailed explanation of the personality traits associated with these numbers.
+Calculate all of the following numerology numbers and elements. Be thorough and accurate in your calculations.
+- Life Path Number (from Date of Birth)
+- Destiny/Expression Number (from Full Name)
+- Soul Urge Number (from vowels in Full Name)
+- Personality Number (from consonants in Full Name)
+- Birth Day Number (from the day of birth)
+- Maturity Number (Life Path + Destiny Number)
+- Personal Year Number (from DOB + Current Year)
+- Lucky Elements (Numbers, Color, Day, Gemstone)
+- Career Suggestions based on the numbers.
+- Relationship Compatibility summary.
+- A detailed, combined analysis of all these aspects.
 
-Output:
-Life Path Number: (Calculation and result)
-Destiny Number: (Calculation and result)
-Personality Traits: (Detailed explanation based on the numbers)`, 
+Provide the full analysis in the structured JSON format as requested.
+`, 
 });
 
 const aiNumerologyAnalysisFlow = ai.defineFlow(
