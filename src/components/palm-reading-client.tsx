@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -23,7 +24,15 @@ const highlightedLineColors = {
     headline: 'stroke-blue-400',
     heartLine: 'stroke-pink-400',
     fateLine: 'stroke-purple-400',
-}
+};
+
+const lineTextColors = {
+    lifeLine: 'text-red-500',
+    headline: 'text-blue-500',
+    heartLine: 'text-pink-500',
+    fateLine: 'text-purple-500',
+};
+
 
 export function PalmReadingClient() {
   const [file, setFile] = useState<File | null>(null);
@@ -105,10 +114,10 @@ export function PalmReadingClient() {
   };
   
   const lineDetails = result ? [
-    { key: 'lifeLine', title: "Life Line", data: result.lifeLine, icon: <Hand className="h-5 w-5 text-primary" /> },
-    { key: 'headline', title: "Head Line", data: result.headline, icon: <Brain className="h-5 w-5 text-primary" /> },
-    { key: 'heartLine', title: "Heart Line", data: result.heartLine, icon: <Heart className="h-5 w-5 text-primary" /> },
-    ...(result.fateLine ? [{ key: 'fateLine', title: "Fate Line", data: result.fateLine, icon: <Sparkles className="h-5 w-5 text-primary" /> }] : [])
+    { key: 'lifeLine', title: "Life Line", data: result.lifeLine, icon: <Hand className="h-5 w-5" /> },
+    { key: 'headline', title: "Head Line", data: result.headline, icon: <Brain className="h-5 w-5" /> },
+    { key: 'heartLine', title: "Heart Line", data: result.heartLine, icon: <Heart className="h-5 w-5" /> },
+    ...(result.fateLine ? [{ key: 'fateLine', title: "Fate Line", data: result.fateLine, icon: <Sparkles className="h-5 w-5" /> }] : [])
   ] : [];
 
   const svgPath = (points: {x: number, y: number}[]) => {
@@ -119,7 +128,7 @@ export function PalmReadingClient() {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-lg w-full max-w-2xl mx-auto">
+      <Card className="shadow-lg w-full">
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2"><Upload className="h-6 w-6" /> Upload Your Palm</CardTitle>
           <CardDescription>Upload a clear image of your dominant hand's palm.</CardDescription>
@@ -174,7 +183,7 @@ export function PalmReadingClient() {
       )}
 
       {result && (
-        <Card className="shadow-lg w-full max-w-2xl mx-auto">
+        <Card className="shadow-lg w-full">
             <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><Bot className="h-6 w-6" /> AI Analysis</CardTitle>
             <CardDescription>Hover over a line's analysis to see it highlighted on the image.</CardDescription>
@@ -208,8 +217,9 @@ export function PalmReadingClient() {
                       onMouseLeave={() => setHighlightedLine(null)}
                       className="cursor-pointer"
                     >
-                        <h3 className="font-headline text-xl flex items-center gap-2">
-                            {detail.icon} {detail.title}
+                        <h3 className={`font-headline text-xl flex items-center gap-2 ${lineTextColors[detail.key as keyof typeof lineTextColors]}`}>
+                            {React.cloneElement(detail.icon, { className: `h-5 w-5 ${lineTextColors[detail.key as keyof typeof lineTextColors]}` })} 
+                            {detail.title}
                         </h3>
                         <p className="mt-2 text-base text-foreground/90 pl-7">
                             {detail.data.analysis}
