@@ -1,6 +1,6 @@
 import React from "react";
 import { PanchangData } from "@/lib/panchang-calculator";
-import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Calendar, Sunrise, Sunset, Moon, Sparkles, Sun, Star } from "lucide-react";
 
 export const DailyPanchangCard = ({ data }: { data: PanchangData }) => {
@@ -22,6 +22,6 @@ export const DailyPanchangCard = ({ data }: { data: PanchangData }) => {
         <li className="flex items-center gap-2 col-span-2"><Sparkles className="text-accent"/><strong>Karana:</strong> {data.karana}</li>
       </ul>
       </CardContent>
-    </div >
+    </Card >
   );
 };
